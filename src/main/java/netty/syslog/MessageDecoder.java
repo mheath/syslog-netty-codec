@@ -29,9 +29,6 @@ import static netty.syslog.DecoderUtil.peek;
 import static netty.syslog.DecoderUtil.readDigit;
 import static netty.syslog.DecoderUtil.readStringToSpace;
 
-/**
- * @author "Mike Heath <elcapo@gmail.com>"
- */
 public class MessageDecoder extends ByteToMessageDecoder {
 
 	@Override

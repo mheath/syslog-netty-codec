@@ -19,9 +19,6 @@ package netty.syslog;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DecoderException;
 
-/**
- * @author "Mike Heath <elcapo@gmail.com>"
- */
 class DecoderUtil {
 	static int readDigit(ByteBuf buffer) {
 		int digit = 0;

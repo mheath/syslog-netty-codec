@@ -27,8 +27,6 @@ import java.util.List;
 
 /**
  * Frames syslog messages per RFC-6587.
- *
- * @author "Mike Heath <elcapo@gmail.com>"
  */
 public class MessageFramer extends ReplayingDecoder<ByteBuf> {
 

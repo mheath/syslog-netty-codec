@@ -28,8 +28,6 @@ import java.util.Map;
 
 /**
  * Represents a Syslog content as defined by RFC 5424. See http://tools.ietf.org/html/rfc5424#section-6.
- *
- * @author "Mike Heath <elcapo@gmail.com>"
  */
 public class Message extends DefaultByteBufHolder {
 
