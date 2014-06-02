@@ -212,7 +212,7 @@ public class Message extends DefaultByteBufHolder {
 				", processId='" + processId + '\'' +
 				", messageId='" + messageId + '\'' +
 				", structuredData=" + structuredData +
-				", message='" + content().toString(StandardCharsets.UTF_8) + '\'' +
+				", message='" + content().duplicate().toString(StandardCharsets.UTF_8) + '\'' +
 				'}';
 	}
 }

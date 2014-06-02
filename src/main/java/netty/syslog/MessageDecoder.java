@@ -86,11 +86,9 @@ public class MessageDecoder extends ByteToMessageDecoder {
 		expect(buffer, '-');
 		expect(buffer, ' ');
 
-		if (peek(buffer) != '-') {
-			final int length = buffer.readableBytes();
-			messageBuilder.content(buffer.slice(buffer.readerIndex(), length).retain());
-			buffer.skipBytes(length);
-		}
+		final int length = buffer.readableBytes();
+		messageBuilder.content(buffer.slice(buffer.readerIndex(), length).retain());
+		buffer.skipBytes(length);
 
 		objects.add(messageBuilder.build());
 	}
