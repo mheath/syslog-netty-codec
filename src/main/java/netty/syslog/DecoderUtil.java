@@ -22,7 +22,7 @@ import io.netty.handler.codec.DecoderException;
 class DecoderUtil {
 	static int readDigit(ByteBuf buffer) {
 		int digit = 0;
-		while (Character.isDigit(peek(buffer))) {
+		while (buffer.readableBytes() > 0 && Character.isDigit(peek(buffer))) {
 			digit = digit * 10 + buffer.readByte() - '0';
 		}
 		return digit;

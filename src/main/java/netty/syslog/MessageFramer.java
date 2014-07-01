@@ -44,16 +44,15 @@ public class MessageFramer extends ReplayingDecoder<ByteBuf> {
 
 	@Override
 	protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out) throws Exception {
-		// Decode the content length
-		final int length = readDigit(buffer);
-		expect(buffer, ' ');
-		if (length > maxMessageSize) {
-			throw new TooLongFrameException("Received a message of length " + length + ", maximum message length is " + maxMessageSize);
+		if (buffer.readableBytes() > 0) {
+			// Decode the content length
+			final int length = readDigit(buffer);
+			expect(buffer, ' ');
+			if (length > maxMessageSize) {
+				throw new TooLongFrameException("Received a message of length " + length + ", maximum message length is " + maxMessageSize);
+			}
+			out.add(buffer.readSlice(length).retain());
 		}
-
-		final ByteBuf messageBuffer = buffer.readSlice(length);
-		messageBuffer.retain();
-		out.add(messageBuffer);
 	}
 
 }
