@@ -33,6 +33,9 @@ public class MessageDecoder extends ByteToMessageDecoder {
 
 	@Override
 	protected void decode(ChannelHandlerContext context, ByteBuf buffer, List<Object> objects) throws Exception {
+		if (buffer.readableBytes() < 1) {
+			return;
+		}
 		final Message.MessageBuilder messageBuilder = Message.MessageBuilder.create();
 
 		// Decode PRI
