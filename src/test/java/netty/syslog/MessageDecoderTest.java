@@ -1,13 +1,14 @@
 package netty.syslog;
 
 import io.netty.buffer.Unpooled;
-import org.testng.annotations.Test;
-import static org.testng.Assert.*;
+import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.junit.Assert.*;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
