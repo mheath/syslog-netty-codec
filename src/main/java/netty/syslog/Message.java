@@ -25,6 +25,7 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents a Syslog content as defined by RFC 5424. See http://tools.ietf.org/html/rfc5424#section-6.
@@ -199,6 +200,26 @@ public class Message extends DefaultByteBufHolder {
 
 	public Map<String, Map<String, String>> getStructuredData() {
 		return structuredData;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		final Message message = (Message) o;
+		return Objects.equals(facility, message.facility) &&
+				Objects.equals(severity, message.severity) &&
+				Objects.equals(timestamp, message.timestamp) &&
+				Objects.equals(hostname, message.hostname) &&
+				Objects.equals(applicationName, message.applicationName) &&
+				Objects.equals(processId, message.processId) &&
+				Objects.equals(messageId, message.messageId) &&
+				Objects.equals(structuredData, message.structuredData);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(facility, severity, timestamp, hostname, applicationName, processId, messageId, structuredData);
 	}
 
 	@Override
