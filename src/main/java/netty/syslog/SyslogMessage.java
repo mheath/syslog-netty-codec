@@ -30,7 +30,7 @@ import java.util.Objects;
 /**
  * Represents a Syslog content as defined by RFC 5424. See http://tools.ietf.org/html/rfc5424#section-6.
  */
-public class Message extends DefaultByteBufHolder {
+public class SyslogMessage extends DefaultByteBufHolder {
 
 	@SuppressWarnings("unused")
 	public enum Facility {
@@ -140,8 +140,8 @@ public class Message extends DefaultByteBufHolder {
 			return this;
 		}
 
-		public Message build() {
-			return new Message(facility, severity, timestamp, hostname, applicationName, processId, messageId, structuredData, content);
+		public SyslogMessage build() {
+			return new SyslogMessage(facility, severity, timestamp, hostname, applicationName, processId, messageId, structuredData, content);
 		}
 	}
 
@@ -154,7 +154,7 @@ public class Message extends DefaultByteBufHolder {
 	private final String messageId;
 	private final Map<String, Map<String, String>> structuredData;
 
-	private Message(Facility facility, Severity severity, ZonedDateTime timestamp, String hostname, String applicationName, String processId, String messageId, Map<String, Map<String, String>> structuredData, ByteBuf message) {
+	private SyslogMessage(Facility facility, Severity severity, ZonedDateTime timestamp, String hostname, String applicationName, String processId, String messageId, Map<String, Map<String, String>> structuredData, ByteBuf message) {
 		super(message);
 		this.facility = facility;
 		this.severity = severity;
@@ -206,7 +206,7 @@ public class Message extends DefaultByteBufHolder {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		final Message message = (Message) o;
+		final SyslogMessage message = (SyslogMessage) o;
 		return Objects.equals(facility, message.facility) &&
 				Objects.equals(severity, message.severity) &&
 				Objects.equals(timestamp, message.timestamp) &&
@@ -224,7 +224,7 @@ public class Message extends DefaultByteBufHolder {
 
 	@Override
 	public String toString() {
-		return "Message{" +
+		return "SyslogMessage{" +
 				"facility=" + facility +
 				", severity=" + severity +
 				", timestamp=" + timestamp +

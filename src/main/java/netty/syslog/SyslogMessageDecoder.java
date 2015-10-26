@@ -25,7 +25,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import static netty.syslog.DecoderUtil.expect;
-import static netty.syslog.DecoderUtil.peek;
 import static netty.syslog.DecoderUtil.readDigit;
 import static netty.syslog.DecoderUtil.readStringToSpace;
 
@@ -36,7 +35,7 @@ public class SyslogMessageDecoder extends ByteToMessageDecoder {
 		if (buffer.readableBytes() < 1) {
 			return;
 		}
-		final Message.MessageBuilder messageBuilder = Message.MessageBuilder.create();
+		final SyslogMessage.MessageBuilder messageBuilder = SyslogMessage.MessageBuilder.create();
 
 		// Decode PRI
 		expect(buffer, '<');
@@ -47,8 +46,8 @@ public class SyslogMessageDecoder extends ByteToMessageDecoder {
 		final int facility = pri / 8;
 		final int severity = pri % 8;
 
-		messageBuilder.facility(Message.Facility.values()[facility]);
-		messageBuilder.severity(Message.Severity.values()[severity]);
+		messageBuilder.facility(SyslogMessage.Facility.values()[facility]);
+		messageBuilder.severity(SyslogMessage.Severity.values()[severity]);
 
 		expect(buffer, '>');
 

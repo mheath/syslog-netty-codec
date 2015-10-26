@@ -30,9 +30,9 @@ public class SyslogMessageDecoderTest {
 	@Test
 	public void decode() throws Exception {
 
-		final Message message = new Message.MessageBuilder()
-				.facility(Message.Facility.USER_LEVEL)
-				.severity(Message.Severity.INFORMATION)
+		final SyslogMessage message = new SyslogMessage.MessageBuilder()
+				.facility(SyslogMessage.Facility.USER_LEVEL)
+				.severity(SyslogMessage.Severity.INFORMATION)
 				.timestamp(ZonedDateTime.parse("2014-03-20T20:14:14Z"))
 				.hostname("loggregator")
 				.applicationName("20d38e29-85bb-4833-81c8-99ba7d0c1b09")
