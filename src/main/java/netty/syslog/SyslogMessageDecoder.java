@@ -29,7 +29,7 @@ import static netty.syslog.DecoderUtil.peek;
 import static netty.syslog.DecoderUtil.readDigit;
 import static netty.syslog.DecoderUtil.readStringToSpace;
 
-public class MessageDecoder extends ByteToMessageDecoder {
+public class SyslogMessageDecoder extends ByteToMessageDecoder {
 
 	@Override
 	protected void decode(ChannelHandlerContext context, ByteBuf buffer, List<Object> objects) throws Exception {
