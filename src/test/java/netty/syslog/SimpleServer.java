@@ -10,7 +10,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 /**
- * @author Mike Heath <elcapo@gmail.com>
+ * @author Mike Heath
  */
 public class SimpleServer {
 	public static void main(String[] args) throws Exception {
@@ -23,7 +23,7 @@ public class SimpleServer {
 					protected void initChannel(SocketChannel channel) throws Exception {
 						final ChannelPipeline pipeline = channel.pipeline();
 
-						pipeline.addLast("framer", new MessageFramer());
+						pipeline.addLast("framer", new SyslogFrameDecoder());
 						pipeline.addLast("decoder", new MessageDecoder());
 						pipeline.addLast("handler", new ChannelInboundHandlerAdapter() {
 							@Override

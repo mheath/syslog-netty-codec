@@ -33,12 +33,17 @@ public class CodecTester {
 		return this;
 	}
 
-	public CodecTester expect(ByteBuf buffer, Object message) {
-		expectations.add(new Expectation(buffer, message));
+	public CodecTester expect(ByteBuf buffer, Object... messages) {
+		expectations.add(new Expectation(buffer, messages));
 		return this;
 	}
 
-	public void assertExpectations() {
+	public CodecTester fragmentBuffer(boolean fragmentBuffer) {
+		this.fragmentBuffer =fragmentBuffer;
+		return this;
+	}
+
+	public void verify() {
 		if (encoderHandlers == null && decoderHandlers == null) {
 			fail("No encoder/decoder handlers to test.");
 		}
@@ -62,12 +67,11 @@ public class CodecTester {
 					// Write 1 byte at a time to ensure the decoder handles pagment fragmentation
 					while (expectation.buffer.readableBytes() > 0) {
 						channel.writeInbound(expectation.buffer.readBytes(1));
-						assertNull(channel.readInbound());
 					}
 				} else {
 					channel.writeInbound(expectation.buffer);
 				}
-				assertEquals(expectation.message, channel.readInbound());
+				expectation.messages.forEach(m -> assertEquals(m, channel.readInbound()));
 			} finally {
 				expectation.buffer.resetReaderIndex();
 			}
@@ -75,16 +79,16 @@ public class CodecTester {
 	}
 
 	private void assertEncoders() {
-
+		fail("Not yet implemented.");
 	}
 
 	private static class Expectation {
 		private final ByteBuf buffer;
-		private final Object message;
+		private final List<Object> messages;
 
-		public Expectation(ByteBuf buffer, Object message) {
+		public Expectation(ByteBuf buffer, Object[] message) {
 			this.buffer = buffer;
-			this.message = message;
+			this.messages = Arrays.asList(message);
 		}
 	}
 }
