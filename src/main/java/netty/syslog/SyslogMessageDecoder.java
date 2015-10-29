@@ -88,15 +88,15 @@ public class SyslogMessageDecoder extends ByteToMessageDecoder {
 		if (DecoderUtil.peek(buffer) == '-') {
 			buffer.readByte();
 		} else {
-			// TODO Decode structured data
+			expect(buffer, '[');
+
 		}
 		expect(buffer, ' ');
 
 		final int length = buffer.readableBytes();
-		messageBuilder.content(buffer.slice(buffer.readerIndex(), length).retain());
-		buffer.skipBytes(length);
+		messageBuilder.content(buffer.readSlice(length).retain());
 
-		objects.add(messageBuilder.build());
+		objects.add(messageBuilder.build(false));
 	}
 
 }

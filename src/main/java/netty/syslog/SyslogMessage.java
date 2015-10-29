@@ -73,6 +73,9 @@ public class SyslogMessage extends DefaultByteBufHolder {
 		DEBUG
 	}
 
+	private static final int PRINTUSASCII_LOW = 33;
+	private static final int PRINTUSASCII_HIGH = 126;
+
 	public static class MessageBuilder {
 		private Facility facility = Facility.USER_LEVEL;
 		private Severity severity = Severity.INFORMATION;
@@ -123,8 +126,18 @@ public class SyslogMessage extends DefaultByteBufHolder {
 			return this;
 		}
 
-		public MessageBuilder addStructuredDataElement(CharSequence name, CharSequence parameterName, String parameterValue) {
-			final AsciiString asciiName = toAsciiString(name);
+		public MessageBuilder addStructuredDataElement(CharSequence id) {
+			setStructuredDataElement(id);
+			return this;
+		}
+
+		public MessageBuilder addStructuredDataElement(CharSequence id, CharSequence name, String value) {
+			setStructuredDataElement(id).put(toAsciiString(name), value);
+			return this;
+		}
+
+		private Map<AsciiString, String> setStructuredDataElement(CharSequence id) {
+			final AsciiString asciiName = toAsciiString(id);
 			if (structuredData == null) {
 				structuredData = new HashMap<>();
 			}
@@ -133,8 +146,7 @@ public class SyslogMessage extends DefaultByteBufHolder {
 				params = new HashMap<>();
 				structuredData.put(asciiName, params);
 			}
-			params.put(toAsciiString(parameterName), parameterValue);
-			return this;
+			return params;
 		}
 
 		public MessageBuilder content(ByteBuf message) {
@@ -142,8 +154,55 @@ public class SyslogMessage extends DefaultByteBufHolder {
 			return this;
 		}
 
-		public SyslogMessage build() {
+		public SyslogMessage build(boolean validate) {
+			if (validate) {
+				validatePrintUsAscii(255, hostname);
+				validatePrintUsAscii(48, applicationName);
+				validatePrintUsAscii(128, processId);
+				validatePrintUsAscii(32, messageId);
+
+				if (structuredData != null) {
+					structuredData.forEach((key, value) -> validateSdName(key));
+				}
+			}
 			return new SyslogMessage(this);
+		}
+
+		/**
+		 * Validates the string is a PRINTUSASCII string per RFC-5424 section 6.
+		 *
+		 * @param maxLength the maximum length of the string
+		 * @param string the string to validate
+		 */
+		private void validatePrintUsAscii(int maxLength, AsciiString string) {
+			if (string == null) {
+				return;
+			}
+			if (string.length() > maxLength) {
+				throw new IllegalArgumentException("String greather than " + maxLength + " characters: " + string);
+			}
+			for (int i = 0; i < string.length(); i++) {
+				final char c = string.charAt(i);
+				if (c < PRINTUSASCII_LOW || c > PRINTUSASCII_HIGH) {
+					throw new IllegalArgumentException("Invalid character '" + c + "' in string: " + string);
+				}
+			}
+		}
+
+		private void validateSdName(AsciiString string) {
+			if (string == null) {
+				return;
+			}
+			if (string.length() > 32) {
+				throw new IllegalArgumentException("String is longer than 32 characters: " + string);
+			}
+			for (int i = 0; i < string.length(); i++) {
+				final char c = string.charAt(i);
+				if (c < PRINTUSASCII_LOW || c > PRINTUSASCII_HIGH || c == '=' || c == ' ' || c == ']' || c == '"') {
+					throw new IllegalArgumentException(
+							"Illegal character '" + c + "' at " + i + " in string: " + string);
+				}
+			}
 		}
 
 		private AsciiString toAsciiString(CharSequence string) {
