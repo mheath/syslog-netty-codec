@@ -40,7 +40,7 @@ public class SyslogMessageDecoderTest {
 				.content(Unpooled.wrappedBuffer("SHLVL : 1".getBytes()))
 				.build();
 		new CodecTester()
-				.decoderHanlders(new SyslogMessageDecoder())
+				.decoderHandlers(new SyslogMessageDecoder())
 				.expect(Unpooled.wrappedBuffer("<14>1 2014-03-20T20:14:14+00:00 loggregator 20d38e29-85bb-4833-81c8-99ba7d0c1b09 [App/0] - - SHLVL : 1".getBytes()), message)
 				.verify();
 	}

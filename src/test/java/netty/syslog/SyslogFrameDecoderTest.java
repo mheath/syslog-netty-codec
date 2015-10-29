@@ -1,8 +1,10 @@
 package netty.syslog;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -23,38 +25,34 @@ public class SyslogFrameDecoderTest {
 		final ByteBuf buffer = Unpooled.buffer(4096);
 
 		// Encode octetCount frame
-		writeString(buffer, Integer.toString(octetCount.length()));
+		ByteBufUtil.writeUtf8(buffer, Integer.toString(octetCount.length()));
 		buffer.writeByte(' ');
-		writeString(buffer, octetCount);
+		ByteBufUtil.writeUtf8(buffer, octetCount);
 
 		// Encode lfTerminated frame
-		writeString(buffer, lfTerminated);
+		ByteBufUtil.writeUtf8(buffer, lfTerminated);
 		buffer.writeByte('\n');
 
 		// Encode nulTerminated frame
-		writeString(buffer, nulTerminated);
+		ByteBufUtil.writeUtf8(buffer, nulTerminated);
 		buffer.writeByte(0);
 
 		// Encode crLfTerminated frame
-		writeString(buffer, crLfTerminated);
+		ByteBufUtil.writeUtf8(buffer, crLfTerminated);
 		buffer.writeByte('\r');
 		buffer.writeByte('\n');
 
 		// Encode second octetCount frame
-		writeString(buffer, Integer.toString(octetCount2.length()));
+		ByteBufUtil.writeUtf8(buffer, Integer.toString(octetCount2.length()));
 		buffer.writeByte(' ');
-		writeString(buffer, octetCount2);
+		ByteBufUtil.writeUtf8(buffer, octetCount2);
 
 		// Run codec test
 		new CodecTester()
 				.fragmentBuffer(true)
-				.decoderHanlders(new SyslogFrameDecoder(), new StringDecoder())
+				.decoderHandlers(new SyslogFrameDecoder(), new StringDecoder())
 				.expect(buffer, octetCount, lfTerminated, nulTerminated, crLfTerminated, octetCount2)
 				.verify();
-	}
-
-	private void writeString(ByteBuf buffer, String string) {
-		buffer.writeBytes(string.getBytes(StandardCharsets.US_ASCII));
 	}
 
 }

@@ -18,6 +18,7 @@ package netty.syslog;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DecoderException;
+import io.netty.util.AsciiString;
 
 class DecoderUtil {
 	static int readDigit(ByteBuf buffer) {
@@ -38,7 +39,7 @@ class DecoderUtil {
 		}
 	}
 
-	static String readStringToSpace(ByteBuf buffer, boolean checkNull) {
+	static AsciiString readAsciiStringToSpace(ByteBuf buffer, boolean checkNull) {
 		if (checkNull && peek(buffer) == '-') {
 			buffer.readByte();
 			return null;
@@ -53,6 +54,6 @@ class DecoderUtil {
 		if (length < 0) {
 			length = buffer.readableBytes();
 		}
-		return new String(buffer.readBytes(length).array());
+		return new AsciiString(buffer.readBytes(length).array(), false);
 	}
 }

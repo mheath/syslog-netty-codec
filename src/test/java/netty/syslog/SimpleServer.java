@@ -24,7 +24,7 @@ public class SimpleServer {
 						final ChannelPipeline pipeline = channel.pipeline();
 
 						pipeline.addLast("framer", new SyslogFrameDecoder());
-						pipeline.addLast("decoder", new MessageDecoder());
+						pipeline.addLast("decoder", new SyslogMessageDecoder());
 						pipeline.addLast("handler", new ChannelInboundHandlerAdapter() {
 							@Override
 							public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -38,8 +38,9 @@ public class SimpleServer {
 
 							@Override
 							public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-								final Message message = (Message) msg;
+								final SyslogMessage message = (SyslogMessage) msg;
 								System.out.println(ctx.channel().remoteAddress() + ":" + message);
+								message.release();
 							}
 						});
 					}

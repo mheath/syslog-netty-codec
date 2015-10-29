@@ -20,13 +20,14 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DecoderException;
+import io.netty.util.AsciiString;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 
 import static netty.syslog.DecoderUtil.expect;
 import static netty.syslog.DecoderUtil.readDigit;
-import static netty.syslog.DecoderUtil.readStringToSpace;
+import static netty.syslog.DecoderUtil.readAsciiStringToSpace;
 
 public class SyslogMessageDecoder extends ByteToMessageDecoder {
 
@@ -59,7 +60,7 @@ public class SyslogMessageDecoder extends ByteToMessageDecoder {
 
 		// Decode TIMESTAMP
 		final ZonedDateTime timestamp;
-		final String timeStampString = readStringToSpace(buffer, true);
+		final AsciiString timeStampString = readAsciiStringToSpace(buffer, true);
 		if (timeStampString == null) {
 			timestamp = null;
 		} else {
@@ -69,23 +70,26 @@ public class SyslogMessageDecoder extends ByteToMessageDecoder {
 		expect(buffer, ' ');
 
 		// Decode HOSTNAME
-		messageBuilder.hostname(readStringToSpace(buffer, true));
+		messageBuilder.hostname(readAsciiStringToSpace(buffer, true));
 		expect(buffer, ' ');
 
 		// Decode APP-NAME
-		messageBuilder.applicationName(readStringToSpace(buffer, true));
+		messageBuilder.applicationName(readAsciiStringToSpace(buffer, true));
 		expect(buffer, ' ');
 
 		// Decode PROC-ID
-		messageBuilder.processId(readStringToSpace(buffer, true));
+		messageBuilder.processId(readAsciiStringToSpace(buffer, true));
 		expect(buffer, ' ');
 
 		// Decode MSGID
-		messageBuilder.messageId(readStringToSpace(buffer, true));
+		messageBuilder.messageId(readAsciiStringToSpace(buffer, true));
 		expect(buffer, ' ');
 
-		// TODO Decode structured data
-		expect(buffer, '-');
+		if (DecoderUtil.peek(buffer) == '-') {
+			buffer.readByte();
+		} else {
+			// TODO Decode structured data
+		}
 		expect(buffer, ' ');
 
 		final int length = buffer.readableBytes();

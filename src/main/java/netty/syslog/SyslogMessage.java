@@ -19,6 +19,7 @@ package netty.syslog;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.DefaultByteBufHolder;
 import io.netty.buffer.Unpooled;
+import io.netty.util.AsciiString;
 
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
@@ -76,11 +77,11 @@ public class SyslogMessage extends DefaultByteBufHolder {
 		private Facility facility = Facility.USER_LEVEL;
 		private Severity severity = Severity.INFORMATION;
 		private ZonedDateTime timestamp = ZonedDateTime.now();
-		private String hostname;
-		private String applicationName;
-		private String processId;
-		private String messageId;
-		private Map<String, Map<String, String>> structuredData;
+		private AsciiString hostname;
+		private AsciiString applicationName;
+		private AsciiString processId;
+		private AsciiString messageId;
+		private Map<AsciiString, Map<AsciiString, String>> structuredData;
 		private ByteBuf content = Unpooled.EMPTY_BUFFER;
 
 		public static MessageBuilder create() {
@@ -102,36 +103,37 @@ public class SyslogMessage extends DefaultByteBufHolder {
 			return this;
 		}
 
-		public MessageBuilder hostname(String hostname) {
-			this.hostname = hostname;
+		public MessageBuilder hostname(CharSequence hostname) {
+			this.hostname = toAsciiString(hostname);
 			return this;
 		}
 
-		public MessageBuilder applicationName(String applicationName) {
-			this.applicationName = applicationName;
+		public MessageBuilder applicationName(CharSequence applicationName) {
+			this.applicationName = toAsciiString(applicationName);
 			return this;
 		}
 
-		public MessageBuilder processId(String processId) {
-			this.processId = processId;
+		public MessageBuilder processId(CharSequence processId) {
+			this.processId = toAsciiString(processId);
 			return this;
 		}
 
-		public MessageBuilder messageId(String messageId) {
-			this.messageId = messageId;
+		public MessageBuilder messageId(AsciiString messageId) {
+			this.messageId = toAsciiString(messageId);
 			return this;
 		}
 
-		public MessageBuilder addStructuredData(String name, String key, String value) {
+		public MessageBuilder addStructuredDataElement(CharSequence name, CharSequence parameterName, String parameterValue) {
+			final AsciiString asciiName = toAsciiString(name);
 			if (structuredData == null) {
 				structuredData = new HashMap<>();
 			}
-			Map<String, String> params = structuredData.get(name);
+			Map<AsciiString, String> params = structuredData.get(asciiName);
 			if (params == null) {
 				params = new HashMap<>();
-				structuredData.put(name, params);
+				structuredData.put(asciiName, params);
 			}
-			params.put(key, value);
+			params.put(toAsciiString(parameterName), parameterValue);
 			return this;
 		}
 
@@ -141,32 +143,40 @@ public class SyslogMessage extends DefaultByteBufHolder {
 		}
 
 		public SyslogMessage build() {
-			return new SyslogMessage(facility, severity, timestamp, hostname, applicationName, processId, messageId, structuredData, content);
+			return new SyslogMessage(this);
 		}
+
+		private AsciiString toAsciiString(CharSequence string) {
+			if (string == null) {
+				return null;
+			}
+			return (string instanceof AsciiString) ? (AsciiString) string : new AsciiString(string);
+		}
+
 	}
 
 	private final Facility facility;
 	private final Severity severity;
 	private final ZonedDateTime timestamp;
-	private final String hostname;
-	private final String applicationName;
-	private final String processId;
-	private final String messageId;
-	private final Map<String, Map<String, String>> structuredData;
+	private final AsciiString hostname;
+	private final AsciiString applicationName;
+	private final AsciiString processId;
+	private final AsciiString messageId;
+	private final Map<AsciiString, Map<AsciiString, String>> structuredData;
 
-	private SyslogMessage(Facility facility, Severity severity, ZonedDateTime timestamp, String hostname, String applicationName, String processId, String messageId, Map<String, Map<String, String>> structuredData, ByteBuf message) {
-		super(message);
-		this.facility = facility;
-		this.severity = severity;
-		this.timestamp = timestamp;
-		this.hostname = hostname;
-		this.applicationName = applicationName;
-		this.processId = processId;
-		this.messageId = messageId;
-		if (structuredData == null) {
+	private SyslogMessage(MessageBuilder builder) {
+		super(builder.content);
+		this.facility = builder.facility;
+		this.severity = builder.severity;
+		this.timestamp = builder.timestamp;
+		this.hostname = builder.hostname;
+		this.applicationName = builder.applicationName;
+		this.processId = builder.processId;
+		this.messageId = builder.messageId;
+		if (builder.structuredData == null) {
 			this.structuredData = Collections.emptyMap();
 		} else {
-			this.structuredData = structuredData;
+			this.structuredData = new HashMap<>(builder.structuredData);
 		}
 	}
 
@@ -182,23 +192,23 @@ public class SyslogMessage extends DefaultByteBufHolder {
 		return timestamp;
 	}
 
-	public String getHostname() {
+	public AsciiString getHostname() {
 		return hostname;
 	}
 
-	public String getApplicationName() {
+	public AsciiString getApplicationName() {
 		return applicationName;
 	}
 
-	public String getProcessId() {
+	public AsciiString getProcessId() {
 		return processId;
 	}
 
-	public String getMessageId() {
+	public AsciiString getMessageId() {
 		return messageId;
 	}
 
-	public Map<String, Map<String, String>> getStructuredData() {
+	public Map<AsciiString, Map<AsciiString, String>> getStructuredData() {
 		return structuredData;
 	}
 
