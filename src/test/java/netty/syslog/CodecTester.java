@@ -1,6 +1,7 @@
 package netty.syslog;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.embedded.EmbeddedChannel;
 
@@ -10,7 +11,6 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 /**
@@ -28,7 +28,7 @@ public class CodecTester {
 		return this;
 	}
 
-	public CodecTester decoderHanlders(ChannelHandler... decoderHandlers) {
+	public CodecTester decoderHandlers(ChannelHandler... decoderHandlers) {
 		this.decoderHandlers = decoderHandlers;
 		return this;
 	}
@@ -51,14 +51,14 @@ public class CodecTester {
 			fail("No expectations to test");
 		}
 		if (decoderHandlers != null) {
-			assertDecoders();
+			verifyDecoders();
 		}
 		if (encoderHandlers != null) {
-			assertEncoders();
+			verifyEncoders();
 		}
 	}
 
-	private void assertDecoders() {
+	private void verifyDecoders() {
 		final EmbeddedChannel channel = new EmbeddedChannel(decoderHandlers);
 		expectations.forEach(expectation -> {
 			expectation.buffer.markReaderIndex();
@@ -78,8 +78,14 @@ public class CodecTester {
 		});
 	}
 
-	private void assertEncoders() {
-		fail("Not yet implemented.");
+	private void verifyEncoders() {
+		final EmbeddedChannel channel = new EmbeddedChannel(encoderHandlers);
+		expectations.forEach(expectation -> {
+			expectation.messages.forEach(channel::writeOutbound);
+			final ByteBuf outboundBuffer = Unpooled.buffer(expectation.buffer.readableBytes());
+			channel.outboundMessages().forEach(buffer -> outboundBuffer.writeBytes((ByteBuf) buffer));
+			assertEquals(expectation.buffer, outboundBuffer);
+		});
 	}
 
 	private static class Expectation {
