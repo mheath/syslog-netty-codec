@@ -25,7 +25,7 @@ public class SyslogFrameEncoderTest {
 		writeFrame(expectedBuffer, frame3);
 
 		new CodecTester()
-				.encoderHandlers(new StringEncoder(StandardCharsets.UTF_8), new SyslogFrameEncoder())
+				.encoderHandlers(new SyslogFrameEncoder(), new StringEncoder(StandardCharsets.UTF_8))
 				.expect(expectedBuffer, frame1, frame2, frame3)
 				.verify();
 	}

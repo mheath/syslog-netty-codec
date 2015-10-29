@@ -18,19 +18,24 @@ package netty.syslog;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.MessageToByteEncoder;
+import io.netty.handler.codec.MessageToMessageEncoder;
+
+import java.util.List;
 
 /**
  * Frames outbound {@link ByteBuf} objects using the Syslog message framing described in RFC-6587.
  *
  * @author Mike Heath
  */
-public class SyslogFrameEncoder extends MessageToByteEncoder<ByteBuf> {
+public class SyslogFrameEncoder extends MessageToMessageEncoder<ByteBuf> {
 	@Override
-	protected void encode(ChannelHandlerContext ctx, ByteBuf msg, ByteBuf out) throws Exception {
-		ByteBufUtil.writeAscii(out, Integer.toString(msg.readableBytes()));
-		out.writeByte(' ');
-		out.writeBytes(msg);
+	protected void encode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
+		final String msgLength = Integer.toString(msg.readableBytes());
+		final ByteBuf lengthBuf = ctx.alloc().buffer(msgLength.length() + 1);
+		ByteBufUtil.writeAscii(lengthBuf, msgLength);
+		lengthBuf.writeByte(' ');
+		out.add(Unpooled.wrappedBuffer(lengthBuf, msg.retain()));
 	}
 }
