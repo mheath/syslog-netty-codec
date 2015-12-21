@@ -39,14 +39,18 @@ class DecoderUtil {
 		}
 	}
 
-	static AsciiString readAsciiStringToSpace(ByteBuf buffer, boolean checkNull) {
+	static AsciiString readAsciiStringToSpace(ByteBuf buf, boolean checkNull) {
+		return readAsciiStringToChar(buf, ' ', checkNull);
+	}
+
+	static AsciiString readAsciiStringToChar(ByteBuf buffer, char c, boolean checkNull) {
 		if (checkNull && peek(buffer) == '-') {
 			buffer.readByte();
 			return null;
 		}
 		int length = -1;
 		for (int i = buffer.readerIndex(); i < buffer.capacity(); i++) {
-			if (buffer.getByte(i) == ' ') {
+			if (buffer.getByte(i) == c) {
 				length = i - buffer.readerIndex();
 				break;
 			}
@@ -54,6 +58,8 @@ class DecoderUtil {
 		if (length < 0) {
 			length = buffer.readableBytes();
 		}
-		return new AsciiString(buffer.readBytes(length).array(), false);
+		final AsciiString string = new AsciiString(buffer.readBytes(length).array(), false);
+		buffer.readByte();
+		return string;
 	}
 }
