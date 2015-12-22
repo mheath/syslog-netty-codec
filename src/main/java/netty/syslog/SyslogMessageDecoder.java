@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import static netty.syslog.DecoderUtil.*;
+import static netty.syslog.CodecUtil.*;
 
 public class SyslogMessageDecoder extends ByteToMessageDecoder {
 
@@ -85,7 +85,7 @@ public class SyslogMessageDecoder extends ByteToMessageDecoder {
             // Decode STRUCTURED-DATA
             decodeStructuredData(messageBuilder, buffer);
         } else if (structuredData != '-') {
-            throw new DecoderException("Invalid structured data field. Expected '[' or '-', got " + structuredData);
+            throw new DecoderException("Invalid structured data field. Expected '[' or '-', got " + (char)structuredData);
         }
 
         final int length = buffer.readableBytes();

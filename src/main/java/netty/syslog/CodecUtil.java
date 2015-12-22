@@ -20,13 +20,18 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DecoderException;
 import io.netty.util.AsciiString;
 
-class DecoderUtil {
+class CodecUtil {
     static int readDigit(ByteBuf buffer) {
         int digit = 0;
         while (buffer.readableBytes() > 0 && Character.isDigit(peek(buffer))) {
             digit = digit * 10 + buffer.readByte() - '0';
         }
         return digit;
+    }
+
+    static ByteBuf writeDigit(ByteBuf buf, int digit) {
+        buf.writeBytes(Integer.toString(digit).getBytes());
+        return buf;
     }
 
     static byte peek(ByteBuf buffer) {
@@ -45,7 +50,7 @@ class DecoderUtil {
 
     static AsciiString readAsciiStringToChar(ByteBuf buffer, char c, boolean checkNull) {
         if (checkNull && peek(buffer) == '-') {
-            buffer.readByte();
+            buffer.readerIndex(buffer.readerIndex() + 2);
             return null;
         }
         int length = -1;

@@ -18,10 +18,12 @@
 package netty.syslog;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.embedded.EmbeddedChannel;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -100,6 +102,8 @@ public class CodecTester {
             expectation.messages.forEach(channel::writeOutbound);
             final ByteBuf outboundBuffer = Unpooled.buffer(expectation.buffer.readableBytes());
             channel.outboundMessages().forEach(buffer -> outboundBuffer.writeBytes((ByteBuf) buffer));
+            System.out.println("Expected: " + expectation.buffer.readerIndex(0).toString(StandardCharsets.UTF_8));
+            System.out.println("Actual  : " + outboundBuffer.readerIndex(0).toString(StandardCharsets.UTF_8));
             assertEquals(expectation.buffer, outboundBuffer);
         });
     }

@@ -22,7 +22,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.TooLongFrameException;
 
-import static netty.syslog.DecoderUtil.*;
+import static netty.syslog.CodecUtil.*;
 
 /**
  * Decodes Syslog frames per RFC-6587.

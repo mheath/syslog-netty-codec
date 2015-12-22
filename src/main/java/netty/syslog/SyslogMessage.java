@@ -33,6 +33,15 @@ import java.util.Objects;
  */
 public class SyslogMessage extends DefaultByteBufHolder {
 
+    public static final int MAX_HOSTNAME_LENGTH = 255;
+    public static final int MAX_APPLICATION_NAME_LENGTH = 48;
+    public static final int MAX_PROCESS_ID_LENGTH = 128;
+    public static final int MAX_MESSAGE_ID_LENGTH = 32;
+    public static final int MAX_SD_NAME_LENGTH = 32;
+
+    private static final int PRINTUSASCII_LOW = 33;
+    private static final int PRINTUSASCII_HIGH = 126;
+
     @SuppressWarnings("unused")
     public enum Facility {
         KERNEL,
@@ -73,13 +82,10 @@ public class SyslogMessage extends DefaultByteBufHolder {
         DEBUG
     }
 
-    private static final int PRINTUSASCII_LOW = 33;
-    private static final int PRINTUSASCII_HIGH = 126;
-
     public static class MessageBuilder {
         private Facility facility = Facility.USER_LEVEL;
         private Severity severity = Severity.INFORMATION;
-        private ZonedDateTime timestamp = ZonedDateTime.now();
+        private ZonedDateTime timestamp;
         private AsciiString hostname;
         private AsciiString applicationName;
         private AsciiString processId;
@@ -156,10 +162,10 @@ public class SyslogMessage extends DefaultByteBufHolder {
 
         public SyslogMessage build(boolean validate) {
             if (validate) {
-                validatePrintUsAscii(255, hostname);
-                validatePrintUsAscii(48, applicationName);
-                validatePrintUsAscii(128, processId);
-                validatePrintUsAscii(32, messageId);
+                validatePrintUsAscii(MAX_HOSTNAME_LENGTH, hostname);
+                validatePrintUsAscii(MAX_APPLICATION_NAME_LENGTH, applicationName);
+                validatePrintUsAscii(MAX_PROCESS_ID_LENGTH, processId);
+                validatePrintUsAscii(MAX_MESSAGE_ID_LENGTH, messageId);
 
                 if (structuredData != null) {
                     structuredData.forEach((key, value) -> validateSdName(key));
@@ -183,7 +189,7 @@ public class SyslogMessage extends DefaultByteBufHolder {
             }
             for (int i = 0; i < string.length(); i++) {
                 final char c = string.charAt(i);
-                if (c < PRINTUSASCII_LOW || c > PRINTUSASCII_HIGH) {
+                if (!isPrintableUsAscii(c)) {
                     throw new IllegalArgumentException("Invalid character '" + c + "' in string: " + string);
                 }
             }
@@ -193,12 +199,12 @@ public class SyslogMessage extends DefaultByteBufHolder {
             if (string == null) {
                 return;
             }
-            if (string.length() > 32) {
+            if (string.length() > MAX_SD_NAME_LENGTH) {
                 throw new IllegalArgumentException("String is longer than 32 characters: " + string);
             }
             for (int i = 0; i < string.length(); i++) {
                 final char c = string.charAt(i);
-                if (c < PRINTUSASCII_LOW || c > PRINTUSASCII_HIGH || c == '=' || c == ' ' || c == ']' || c == '"') {
+                if (!isPrintableUsAscii(c) || c == '=' || c == ' ' || c == ']' || c == '"') {
                     throw new IllegalArgumentException(
                             "Illegal character '" + c + "' at " + i + " in string: " + string);
                 }
@@ -212,6 +218,10 @@ public class SyslogMessage extends DefaultByteBufHolder {
             return (string instanceof AsciiString)? (AsciiString) string : new AsciiString(string);
         }
 
+    }
+
+    static boolean isPrintableUsAscii(char c) {
+        return c >= PRINTUSASCII_LOW && c <= PRINTUSASCII_HIGH;
     }
 
     private final Facility facility;
