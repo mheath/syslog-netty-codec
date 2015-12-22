@@ -25,7 +25,7 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
 
 /**
  * @author Mike Heath

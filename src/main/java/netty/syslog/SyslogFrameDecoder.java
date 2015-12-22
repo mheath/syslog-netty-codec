@@ -20,7 +20,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
-import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.codec.TooLongFrameException;
 
 import static netty.syslog.DecoderUtil.*;
@@ -30,56 +29,57 @@ import static netty.syslog.DecoderUtil.*;
  */
 public class SyslogFrameDecoder extends DelimiterBasedFrameDecoder {
 
-	public static final int DEFAULT_MAX_MESSAGE_SIZE = 64 * 1024;
-	private static final ByteBuf[] DELIMITERS = new ByteBuf[]{
-			Unpooled.wrappedBuffer(new byte[]{0}),
-			Unpooled.wrappedBuffer(new byte[] { '\r', '\n' }),
-			Unpooled.wrappedBuffer(new byte[] { '\n' }),
-	};
+    public static final int DEFAULT_MAX_MESSAGE_SIZE = 64 * 1024;
+    private static final ByteBuf[] DELIMITERS = new ByteBuf[] {
+            Unpooled.wrappedBuffer(new byte[] { 0 }),
+            Unpooled.wrappedBuffer(new byte[] { '\r', '\n' }),
+            Unpooled.wrappedBuffer(new byte[] { '\n' }),
+    };
 
-	private final int maxLength;
+    private final int maxLength;
 
-	private boolean readingLine = false;
+    private boolean readingLine = false;
 
-	public SyslogFrameDecoder() {
-		this(DEFAULT_MAX_MESSAGE_SIZE);
-	}
+    public SyslogFrameDecoder() {
+        this(DEFAULT_MAX_MESSAGE_SIZE);
+    }
 
 
-	public SyslogFrameDecoder(int maxLength) {
-		this(maxLength, true, false);
-	}
+    public SyslogFrameDecoder(int maxLength) {
+        this(maxLength, true, false);
+    }
 
-	public SyslogFrameDecoder(int maxLength, boolean stripDelimiter, boolean failFast) {
-		super(maxLength, stripDelimiter, failFast, DELIMITERS);
-		this.maxLength = maxLength;
-	}
+    public SyslogFrameDecoder(int maxLength, boolean stripDelimiter, boolean failFast) {
+        super(maxLength, stripDelimiter, failFast, DELIMITERS);
+        this.maxLength = maxLength;
+    }
 
-	@Override
-	protected Object decode(ChannelHandlerContext ctx, ByteBuf buffer) throws Exception {
-		if (buffer.readableBytes() == 0) {
-			return null;
-		}
-		final int length;
-		if (!readingLine && Character.isDigit(peek(buffer))) {
-			buffer.markReaderIndex();
-			// Decode the content length
-			length = readDigit(buffer);
-			if (buffer.readableBytes() == 0 || buffer.readableBytes() < length + 1) {
-				// Received a buffer with an incomplete frame
-				buffer.resetReaderIndex();
-				return null;
-			}
-			expect(buffer, ' ');
-			if (length > maxLength) {
-				throw new TooLongFrameException("Received a message of length " + length + ", maximum message length is " + maxLength);
-			}
-			return buffer.readSlice(length).retain();
-		} else {
-			final Object lineFrame = super.decode(ctx, buffer);
-			readingLine = lineFrame == null;
-			return lineFrame;
-		}
-	}
+    @Override
+    protected Object decode(ChannelHandlerContext ctx, ByteBuf buffer) throws Exception {
+        if (buffer.readableBytes() == 0) {
+            return null;
+        }
+        final int length;
+        if (!readingLine && Character.isDigit(peek(buffer))) {
+            buffer.markReaderIndex();
+            // Decode the content length
+            length = readDigit(buffer);
+            if (buffer.readableBytes() == 0 || buffer.readableBytes() < length + 1) {
+                // Received a buffer with an incomplete frame
+                buffer.resetReaderIndex();
+                return null;
+            }
+            expect(buffer, ' ');
+            if (length > maxLength) {
+                throw new TooLongFrameException(
+                        "Received a message of length " + length + ", maximum message length is " + maxLength);
+            }
+            return buffer.readSlice(length).retain();
+        } else {
+            final Object lineFrame = super.decode(ctx, buffer);
+            readingLine = lineFrame == null;
+            return lineFrame;
+        }
+    }
 
 }

@@ -17,7 +17,6 @@
 package netty.syslog;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
@@ -28,119 +27,115 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import static netty.syslog.DecoderUtil.expect;
-import static netty.syslog.DecoderUtil.peek;
-import static netty.syslog.DecoderUtil.readAsciiStringToChar;
-import static netty.syslog.DecoderUtil.readDigit;
-import static netty.syslog.DecoderUtil.readAsciiStringToSpace;
+import static netty.syslog.DecoderUtil.*;
 
 public class SyslogMessageDecoder extends ByteToMessageDecoder {
 
-	@Override
-	protected void decode(ChannelHandlerContext context, ByteBuf buffer, List<Object> objects) throws Exception {
-		if (buffer.readableBytes() < 1) {
-			return;
-		}
-		final SyslogMessage.MessageBuilder messageBuilder = SyslogMessage.MessageBuilder.create();
+    @Override
+    protected void decode(ChannelHandlerContext context, ByteBuf buffer, List<Object> objects) throws Exception {
+        if (buffer.readableBytes() < 1) {
+            return;
+        }
+        final SyslogMessage.MessageBuilder messageBuilder = SyslogMessage.MessageBuilder.create();
 
-		// Decode PRI
-		expect(buffer, '<');
-		final int pri = readDigit(buffer);
-		if (pri < 0 || pri > 191) {
-			throw new DecoderException("Invalid PRIVAL " + pri);
-		}
-		final int facility = pri / 8;
-		final int severity = pri % 8;
+        // Decode PRI
+        expect(buffer, '<');
+        final int pri = readDigit(buffer);
+        if (pri < 0 || pri > 191) {
+            throw new DecoderException("Invalid PRIVAL " + pri);
+        }
+        final int facility = pri / 8;
+        final int severity = pri % 8;
 
-		messageBuilder.facility(SyslogMessage.Facility.values()[facility]);
-		messageBuilder.severity(SyslogMessage.Severity.values()[severity]);
+        messageBuilder.facility(SyslogMessage.Facility.values()[facility]);
+        messageBuilder.severity(SyslogMessage.Severity.values()[severity]);
 
-		expect(buffer, '>');
+        expect(buffer, '>');
 
-		// Decode VERSION
-		if (buffer.readByte() != '1') {
-			throw new DecoderException("Expected a version 1 syslog message");
-		}
-		expect(buffer, ' ');
+        // Decode VERSION
+        if (buffer.readByte() != '1') {
+            throw new DecoderException("Expected a version 1 syslog message");
+        }
+        expect(buffer, ' ');
 
-		// Decode TIMESTAMP
-		final ZonedDateTime timestamp;
-		final AsciiString timeStampString = readAsciiStringToSpace(buffer, true);
-		if (timeStampString == null) {
-			timestamp = null;
-		} else {
-			timestamp = ZonedDateTime.parse(timeStampString);
-		}
-		messageBuilder.timestamp(timestamp);
+        // Decode TIMESTAMP
+        final ZonedDateTime timestamp;
+        final AsciiString timeStampString = readAsciiStringToSpace(buffer, true);
+        if (timeStampString == null) {
+            timestamp = null;
+        } else {
+            timestamp = ZonedDateTime.parse(timeStampString);
+        }
+        messageBuilder.timestamp(timestamp);
 
-		// Decode HOSTNAME
-		messageBuilder.hostname(readAsciiStringToSpace(buffer, true));
+        // Decode HOSTNAME
+        messageBuilder.hostname(readAsciiStringToSpace(buffer, true));
 
-		// Decode APP-NAME
-		messageBuilder.applicationName(readAsciiStringToSpace(buffer, true));
+        // Decode APP-NAME
+        messageBuilder.applicationName(readAsciiStringToSpace(buffer, true));
 
-		// Decode PROC-ID
-		messageBuilder.processId(readAsciiStringToSpace(buffer, true));
+        // Decode PROC-ID
+        messageBuilder.processId(readAsciiStringToSpace(buffer, true));
 
-		// Decode MSGID
-		messageBuilder.messageId(readAsciiStringToSpace(buffer, true));
+        // Decode MSGID
+        messageBuilder.messageId(readAsciiStringToSpace(buffer, true));
 
-		final byte structuredData = buffer.readByte();
-		if (structuredData == '[') {
-			// Decode STRUCTURED-DATA
-			decodeStructuredData(messageBuilder, buffer);
-		} else if (structuredData != '-') {
-			throw new DecoderException("Invalid structured data field. Expected '[' or '-', got " + structuredData);
-		}
+        final byte structuredData = buffer.readByte();
+        if (structuredData == '[') {
+            // Decode STRUCTURED-DATA
+            decodeStructuredData(messageBuilder, buffer);
+        } else if (structuredData != '-') {
+            throw new DecoderException("Invalid structured data field. Expected '[' or '-', got " + structuredData);
+        }
 
-		final int length = buffer.readableBytes();
-		messageBuilder.content(buffer.readSlice(length).retain());
+        final int length = buffer.readableBytes();
+        messageBuilder.content(buffer.readSlice(length).retain());
 
-		objects.add(messageBuilder.build(false));
-	}
+        objects.add(messageBuilder.build(false));
+    }
 
-	static void decodeStructuredData(SyslogMessage.MessageBuilder builder, ByteBuf buf) {
-		byte termByte;
-		do {
-			final AsciiString element = readAsciiStringToSpace(buf, false);
-			if (peek(buf) == '-') {
-				buf.readByte();
-				expect(buf, ']');
-				builder.addStructuredDataElement(element);
-			} else {
-				do {
-					final AsciiString paramName = readAsciiStringToChar(buf, '=', false);
-					if (paramName == null) {
-						builder.addStructuredDataElement(element);
-					} else {
-						final String paramValue = readParamValue(buf);
-						builder.addStructuredDataElement(element, paramName,paramValue);
-					}
-					termByte = buf.readByte();
-				} while (termByte != ']');
-			}
-			termByte = buf.readByte();
-		} while (termByte == '[');
-		if (termByte != ' ') {
-			throw new DecoderException("Expected ']' found " + (char)termByte);
-		}
-	}
+    static void decodeStructuredData(SyslogMessage.MessageBuilder builder, ByteBuf buf) {
+        byte termByte;
+        do {
+            final AsciiString element = readAsciiStringToSpace(buf, false);
+            if (peek(buf) == '-') {
+                buf.readByte();
+                expect(buf, ']');
+                builder.addStructuredDataElement(element);
+            } else {
+                do {
+                    final AsciiString paramName = readAsciiStringToChar(buf, '=', false);
+                    if (paramName == null) {
+                        builder.addStructuredDataElement(element);
+                    } else {
+                        final String paramValue = readParamValue(buf);
+                        builder.addStructuredDataElement(element, paramName, paramValue);
+                    }
+                    termByte = buf.readByte();
+                } while (termByte != ']');
+            }
+            termByte = buf.readByte();
+        } while (termByte == '[');
+        if (termByte != ' ') {
+            throw new DecoderException("Expected ']' found " + (char) termByte);
+        }
+    }
 
-	private static String readParamValue(ByteBuf buf) {
-		expect(buf, '"');
-		final ByteBuf valueBuf = Unpooled.buffer(buf.readableBytes());
-		try {
-			byte b;
-			while ((b = buf.readByte()) != '"') {
-				if (b == '\\') {
-					b = buf.readByte();
-				}
-				valueBuf.writeByte(b);
-			}
-			return valueBuf.toString(StandardCharsets.UTF_8);
-		} finally {
-			valueBuf.release();
-		}
-	}
+    private static String readParamValue(ByteBuf buf) {
+        expect(buf, '"');
+        final ByteBuf valueBuf = Unpooled.buffer(buf.readableBytes());
+        try {
+            byte b;
+            while ((b = buf.readByte()) != '"') {
+                if (b == '\\') {
+                    b = buf.readByte();
+                }
+                valueBuf.writeByte(b);
+            }
+            return valueBuf.toString(StandardCharsets.UTF_8);
+        } finally {
+            valueBuf.release();
+        }
+    }
 
 }

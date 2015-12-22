@@ -30,12 +30,12 @@ import java.util.List;
  * @author Mike Heath
  */
 public class SyslogFrameEncoder extends MessageToMessageEncoder<ByteBuf> {
-	@Override
-	protected void encode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
-		final String msgLength = Integer.toString(msg.readableBytes());
-		final ByteBuf lengthBuf = ctx.alloc().buffer(msgLength.length() + 1);
-		ByteBufUtil.writeAscii(lengthBuf, msgLength);
-		lengthBuf.writeByte(' ');
-		out.add(Unpooled.wrappedBuffer(lengthBuf, msg.retain()));
-	}
+    @Override
+    protected void encode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
+        final String msgLength = Integer.toString(msg.readableBytes());
+        final ByteBuf lengthBuf = ctx.alloc().buffer(msgLength.length() + 1);
+        ByteBufUtil.writeAscii(lengthBuf, msgLength);
+        lengthBuf.writeByte(' ');
+        out.add(Unpooled.wrappedBuffer(lengthBuf, msg.retain()));
+    }
 }

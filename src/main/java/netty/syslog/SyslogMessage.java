@@ -33,276 +33,281 @@ import java.util.Objects;
  */
 public class SyslogMessage extends DefaultByteBufHolder {
 
-	@SuppressWarnings("unused")
-	public enum Facility {
-		KERNEL,
-		USER_LEVEL,
-		MAIL,
-		SYSTEM_DAEMON,
-		SECURITY,
-		SYSLOGD,
-		LINE_PRINTER,
-		NETWORK_NEWS,
-		UUCP,
-		CLOCK,
-		SECURITY2,
-		FTP,
-		NTP,
-		LOG_AUDIT,
-		LOG_ALERTY,
-		CLOCK2,
-		LOCAL0,
-		LOCAL1,
-		LOCAL2,
-		LOCAL3,
-		LOCAL4,
-		LOCAL5,
-		LOCAL6,
-		LOCAL7
-	}
+    @SuppressWarnings("unused")
+    public enum Facility {
+        KERNEL,
+        USER_LEVEL,
+        MAIL,
+        SYSTEM_DAEMON,
+        SECURITY,
+        SYSLOGD,
+        LINE_PRINTER,
+        NETWORK_NEWS,
+        UUCP,
+        CLOCK,
+        SECURITY2,
+        FTP,
+        NTP,
+        LOG_AUDIT,
+        LOG_ALERTY,
+        CLOCK2,
+        LOCAL0,
+        LOCAL1,
+        LOCAL2,
+        LOCAL3,
+        LOCAL4,
+        LOCAL5,
+        LOCAL6,
+        LOCAL7
+    }
 
-	@SuppressWarnings("unused")
-	public enum Severity {
-		EMERGENCY,
-		ALERT,
-		CRITICAL,
-		ERROR,
-		WARNING,
-		NOTICE,
-		INFORMATION,
-		DEBUG
-	}
+    @SuppressWarnings("unused")
+    public enum Severity {
+        EMERGENCY,
+        ALERT,
+        CRITICAL,
+        ERROR,
+        WARNING,
+        NOTICE,
+        INFORMATION,
+        DEBUG
+    }
 
-	private static final int PRINTUSASCII_LOW = 33;
-	private static final int PRINTUSASCII_HIGH = 126;
+    private static final int PRINTUSASCII_LOW = 33;
+    private static final int PRINTUSASCII_HIGH = 126;
 
-	public static class MessageBuilder {
-		private Facility facility = Facility.USER_LEVEL;
-		private Severity severity = Severity.INFORMATION;
-		private ZonedDateTime timestamp = ZonedDateTime.now();
-		private AsciiString hostname;
-		private AsciiString applicationName;
-		private AsciiString processId;
-		private AsciiString messageId;
-		private Map<AsciiString, Map<AsciiString, String>> structuredData;
-		private ByteBuf content = Unpooled.EMPTY_BUFFER;
+    public static class MessageBuilder {
+        private Facility facility = Facility.USER_LEVEL;
+        private Severity severity = Severity.INFORMATION;
+        private ZonedDateTime timestamp = ZonedDateTime.now();
+        private AsciiString hostname;
+        private AsciiString applicationName;
+        private AsciiString processId;
+        private AsciiString messageId;
+        private Map<AsciiString, Map<AsciiString, String>> structuredData;
+        private ByteBuf content = Unpooled.EMPTY_BUFFER;
 
-		public static MessageBuilder create() {
-			return new MessageBuilder();
-		}
+        public static MessageBuilder create() {
+            return new MessageBuilder();
+        }
 
-		public MessageBuilder facility(Facility facility) {
-			this.facility = facility;
-			return this;
-		}
+        public MessageBuilder facility(Facility facility) {
+            this.facility = facility;
+            return this;
+        }
 
-		public MessageBuilder severity(Severity severity) {
-			this.severity = severity;
-			return this;
-		}
+        public MessageBuilder severity(Severity severity) {
+            this.severity = severity;
+            return this;
+        }
 
-		public MessageBuilder timestamp(ZonedDateTime timestamp) {
-			this.timestamp = timestamp;
-			return this;
-		}
+        public MessageBuilder timestamp(ZonedDateTime timestamp) {
+            this.timestamp = timestamp;
+            return this;
+        }
 
-		public MessageBuilder hostname(CharSequence hostname) {
-			this.hostname = toAsciiString(hostname);
-			return this;
-		}
+        public MessageBuilder hostname(CharSequence hostname) {
+            this.hostname = toAsciiString(hostname);
+            return this;
+        }
 
-		public MessageBuilder applicationName(CharSequence applicationName) {
-			this.applicationName = toAsciiString(applicationName);
-			return this;
-		}
+        public MessageBuilder applicationName(CharSequence applicationName) {
+            this.applicationName = toAsciiString(applicationName);
+            return this;
+        }
 
-		public MessageBuilder processId(CharSequence processId) {
-			this.processId = toAsciiString(processId);
-			return this;
-		}
+        public MessageBuilder processId(CharSequence processId) {
+            this.processId = toAsciiString(processId);
+            return this;
+        }
 
-		public MessageBuilder messageId(AsciiString messageId) {
-			this.messageId = toAsciiString(messageId);
-			return this;
-		}
+        public MessageBuilder messageId(AsciiString messageId) {
+            this.messageId = toAsciiString(messageId);
+            return this;
+        }
 
-		public MessageBuilder addStructuredDataElement(CharSequence id) {
-			setStructuredDataElement(id);
-			return this;
-		}
+        public MessageBuilder addStructuredDataElement(CharSequence id) {
+            setStructuredDataElement(id);
+            return this;
+        }
 
-		public MessageBuilder addStructuredDataElement(CharSequence id, CharSequence name, String value) {
-			setStructuredDataElement(id).put(toAsciiString(name), value);
-			return this;
-		}
+        public MessageBuilder addStructuredDataElement(CharSequence id, CharSequence name, String value) {
+            setStructuredDataElement(id).put(toAsciiString(name), value);
+            return this;
+        }
 
-		private Map<AsciiString, String> setStructuredDataElement(CharSequence id) {
-			final AsciiString asciiName = toAsciiString(id);
-			if (structuredData == null) {
-				structuredData = new HashMap<>();
-			}
-			Map<AsciiString, String> params = structuredData.get(asciiName);
-			if (params == null) {
-				params = new HashMap<>();
-				structuredData.put(asciiName, params);
-			}
-			return params;
-		}
+        private Map<AsciiString, String> setStructuredDataElement(CharSequence id) {
+            final AsciiString asciiName = toAsciiString(id);
+            if (structuredData == null) {
+                structuredData = new HashMap<>();
+            }
+            Map<AsciiString, String> params = structuredData.get(asciiName);
+            if (params == null) {
+                params = new HashMap<>();
+                structuredData.put(asciiName, params);
+            }
+            return params;
+        }
 
-		public MessageBuilder content(ByteBuf message) {
-			this.content = message;
-			return this;
-		}
+        public MessageBuilder content(ByteBuf message) {
+            this.content = message;
+            return this;
+        }
 
-		public SyslogMessage build(boolean validate) {
-			if (validate) {
-				validatePrintUsAscii(255, hostname);
-				validatePrintUsAscii(48, applicationName);
-				validatePrintUsAscii(128, processId);
-				validatePrintUsAscii(32, messageId);
+        public SyslogMessage build(boolean validate) {
+            if (validate) {
+                validatePrintUsAscii(255, hostname);
+                validatePrintUsAscii(48, applicationName);
+                validatePrintUsAscii(128, processId);
+                validatePrintUsAscii(32, messageId);
 
-				if (structuredData != null) {
-					structuredData.forEach((key, value) -> validateSdName(key));
-				}
-			}
-			return new SyslogMessage(this);
-		}
+                if (structuredData != null) {
+                    structuredData.forEach((key, value) -> validateSdName(key));
+                }
+            }
+            return new SyslogMessage(this);
+        }
 
-		/**
-		 * Validates the string is a PRINTUSASCII string per RFC-5424 section 6.
-		 *
-		 * @param maxLength the maximum length of the string
-		 * @param string the string to validate
-		 */
-		private void validatePrintUsAscii(int maxLength, AsciiString string) {
-			if (string == null) {
-				return;
-			}
-			if (string.length() > maxLength) {
-				throw new IllegalArgumentException("String greather than " + maxLength + " characters: " + string);
-			}
-			for (int i = 0; i < string.length(); i++) {
-				final char c = string.charAt(i);
-				if (c < PRINTUSASCII_LOW || c > PRINTUSASCII_HIGH) {
-					throw new IllegalArgumentException("Invalid character '" + c + "' in string: " + string);
-				}
-			}
-		}
+        /**
+         * Validates the string is a PRINTUSASCII string per RFC-5424 section 6.
+         *
+         * @param maxLength the maximum length of the string
+         * @param string the string to validate
+         */
+        private void validatePrintUsAscii(int maxLength, AsciiString string) {
+            if (string == null) {
+                return;
+            }
+            if (string.length() > maxLength) {
+                throw new IllegalArgumentException("String greather than " + maxLength + " characters: " + string);
+            }
+            for (int i = 0; i < string.length(); i++) {
+                final char c = string.charAt(i);
+                if (c < PRINTUSASCII_LOW || c > PRINTUSASCII_HIGH) {
+                    throw new IllegalArgumentException("Invalid character '" + c + "' in string: " + string);
+                }
+            }
+        }
 
-		private void validateSdName(AsciiString string) {
-			if (string == null) {
-				return;
-			}
-			if (string.length() > 32) {
-				throw new IllegalArgumentException("String is longer than 32 characters: " + string);
-			}
-			for (int i = 0; i < string.length(); i++) {
-				final char c = string.charAt(i);
-				if (c < PRINTUSASCII_LOW || c > PRINTUSASCII_HIGH || c == '=' || c == ' ' || c == ']' || c == '"') {
-					throw new IllegalArgumentException(
-							"Illegal character '" + c + "' at " + i + " in string: " + string);
-				}
-			}
-		}
+        private void validateSdName(AsciiString string) {
+            if (string == null) {
+                return;
+            }
+            if (string.length() > 32) {
+                throw new IllegalArgumentException("String is longer than 32 characters: " + string);
+            }
+            for (int i = 0; i < string.length(); i++) {
+                final char c = string.charAt(i);
+                if (c < PRINTUSASCII_LOW || c > PRINTUSASCII_HIGH || c == '=' || c == ' ' || c == ']' || c == '"') {
+                    throw new IllegalArgumentException(
+                            "Illegal character '" + c + "' at " + i + " in string: " + string);
+                }
+            }
+        }
 
-		private AsciiString toAsciiString(CharSequence string) {
-			if (string == null) {
-				return null;
-			}
-			return (string instanceof AsciiString) ? (AsciiString) string : new AsciiString(string);
-		}
+        private AsciiString toAsciiString(CharSequence string) {
+            if (string == null) {
+                return null;
+            }
+            return (string instanceof AsciiString)? (AsciiString) string : new AsciiString(string);
+        }
 
-	}
+    }
 
-	private final Facility facility;
-	private final Severity severity;
-	private final ZonedDateTime timestamp;
-	private final AsciiString hostname;
-	private final AsciiString applicationName;
-	private final AsciiString processId;
-	private final AsciiString messageId;
-	private final Map<AsciiString, Map<AsciiString, String>> structuredData;
+    private final Facility facility;
+    private final Severity severity;
+    private final ZonedDateTime timestamp;
+    private final AsciiString hostname;
+    private final AsciiString applicationName;
+    private final AsciiString processId;
+    private final AsciiString messageId;
+    private final Map<AsciiString, Map<AsciiString, String>> structuredData;
 
-	private SyslogMessage(MessageBuilder builder) {
-		super(builder.content);
-		this.facility = builder.facility;
-		this.severity = builder.severity;
-		this.timestamp = builder.timestamp;
-		this.hostname = builder.hostname;
-		this.applicationName = builder.applicationName;
-		this.processId = builder.processId;
-		this.messageId = builder.messageId;
-		if (builder.structuredData == null) {
-			this.structuredData = Collections.emptyMap();
-		} else {
-			this.structuredData = new HashMap<>(builder.structuredData);
-		}
-	}
+    private SyslogMessage(MessageBuilder builder) {
+        super(builder.content);
+        this.facility = builder.facility;
+        this.severity = builder.severity;
+        this.timestamp = builder.timestamp;
+        this.hostname = builder.hostname;
+        this.applicationName = builder.applicationName;
+        this.processId = builder.processId;
+        this.messageId = builder.messageId;
+        if (builder.structuredData == null) {
+            this.structuredData = Collections.emptyMap();
+        } else {
+            this.structuredData = new HashMap<>(builder.structuredData);
+        }
+    }
 
-	public Facility getFacility() {
-		return facility;
-	}
+    public Facility getFacility() {
+        return facility;
+    }
 
-	public Severity getSeverity() {
-		return severity;
-	}
+    public Severity getSeverity() {
+        return severity;
+    }
 
-	public ZonedDateTime getTimestamp() {
-		return timestamp;
-	}
+    public ZonedDateTime getTimestamp() {
+        return timestamp;
+    }
 
-	public AsciiString getHostname() {
-		return hostname;
-	}
+    public AsciiString getHostname() {
+        return hostname;
+    }
 
-	public AsciiString getApplicationName() {
-		return applicationName;
-	}
+    public AsciiString getApplicationName() {
+        return applicationName;
+    }
 
-	public AsciiString getProcessId() {
-		return processId;
-	}
+    public AsciiString getProcessId() {
+        return processId;
+    }
 
-	public AsciiString getMessageId() {
-		return messageId;
-	}
+    public AsciiString getMessageId() {
+        return messageId;
+    }
 
-	public Map<AsciiString, Map<AsciiString, String>> getStructuredData() {
-		return structuredData;
-	}
+    public Map<AsciiString, Map<AsciiString, String>> getStructuredData() {
+        return structuredData;
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		final SyslogMessage message = (SyslogMessage) o;
-		return Objects.equals(facility, message.facility) &&
-				Objects.equals(severity, message.severity) &&
-				Objects.equals(timestamp, message.timestamp) &&
-				Objects.equals(hostname, message.hostname) &&
-				Objects.equals(applicationName, message.applicationName) &&
-				Objects.equals(processId, message.processId) &&
-				Objects.equals(messageId, message.messageId) &&
-				Objects.equals(structuredData, message.structuredData);
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final SyslogMessage message = (SyslogMessage) o;
+        return Objects.equals(facility, message.facility) &&
+               Objects.equals(severity, message.severity) &&
+               Objects.equals(timestamp, message.timestamp) &&
+               Objects.equals(hostname, message.hostname) &&
+               Objects.equals(applicationName, message.applicationName) &&
+               Objects.equals(processId, message.processId) &&
+               Objects.equals(messageId, message.messageId) &&
+               Objects.equals(structuredData, message.structuredData);
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(facility, severity, timestamp, hostname, applicationName, processId, messageId, structuredData);
-	}
+    @Override
+    public int hashCode() {
+        return Objects
+                .hash(facility, severity, timestamp, hostname, applicationName, processId, messageId, structuredData);
+    }
 
-	@Override
-	public String toString() {
-		return "SyslogMessage{" +
-				"facility=" + facility +
-				", severity=" + severity +
-				", timestamp=" + timestamp +
-				", hostname='" + hostname + '\'' +
-				", applicationName='" + applicationName + '\'' +
-				", processId='" + processId + '\'' +
-				", messageId='" + messageId + '\'' +
-				", structuredData=" + structuredData +
-				", message='" + content().duplicate().toString(StandardCharsets.UTF_8) + '\'' +
-				'}';
-	}
+    @Override
+    public String toString() {
+        return "SyslogMessage{" +
+               "facility=" + facility +
+               ", severity=" + severity +
+               ", timestamp=" + timestamp +
+               ", hostname='" + hostname + '\'' +
+               ", applicationName='" + applicationName + '\'' +
+               ", processId='" + processId + '\'' +
+               ", messageId='" + messageId + '\'' +
+               ", structuredData=" + structuredData +
+               ", message='" + content().duplicate().toString(StandardCharsets.UTF_8) + '\'' +
+               '}';
+    }
 }
