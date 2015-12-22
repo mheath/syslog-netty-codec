@@ -29,7 +29,26 @@ import java.util.List;
 
 import static netty.syslog.CodecUtil.*;
 
+/**
+ * Decodes RFC-5234 Syslog messages.
+ */
 public class SyslogMessageDecoder extends ByteToMessageDecoder {
+
+    private final boolean validateMessages;
+
+    public SyslogMessageDecoder() {
+        this(false);
+    }
+
+    /**
+     * If the {@code validateMessages} flag is set, every Syslog message that comes over the wire will be validated to
+     * ensure it conforms to RFC-5234.
+     *
+     * @param validateMessages if set, each message will be validated to ensure it conforms to RFC-5234.
+     */
+    public SyslogMessageDecoder(boolean validateMessages) {
+        this.validateMessages = validateMessages;
+    }
 
     @Override
     protected void decode(ChannelHandlerContext context, ByteBuf buffer, List<Object> objects) throws Exception {
@@ -91,7 +110,7 @@ public class SyslogMessageDecoder extends ByteToMessageDecoder {
         final int length = buffer.readableBytes();
         messageBuilder.content(buffer.readSlice(length).retain());
 
-        objects.add(messageBuilder.build(false));
+        objects.add(messageBuilder.build(validateMessages));
     }
 
     static void decodeStructuredData(SyslogMessage.MessageBuilder builder, ByteBuf buf) {
