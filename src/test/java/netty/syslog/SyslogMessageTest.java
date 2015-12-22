@@ -20,10 +20,16 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-/**
- * @author Mike Heath
- */
 public class SyslogMessageTest {
+
+    @Test
+    public void utf8WithBom() {
+        final String utf8String = "¬(¬α ∨ β)";
+        final SyslogMessage message = SyslogMessage.builder()
+                                                 .utf8Content(utf8String)
+                                                 .build(false);
+        assertEquals(utf8String, message.contentAsUtf8());
+    }
 
     @Test
     public void printableUsAscii() {

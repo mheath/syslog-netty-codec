@@ -17,6 +17,7 @@
 package netty.syslog;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.DefaultByteBufHolder;
 import io.netty.buffer.Unpooled;
 import io.netty.util.AsciiString;
@@ -41,6 +42,8 @@ public class SyslogMessage extends DefaultByteBufHolder {
 
     private static final int PRINTUSASCII_LOW = 33;
     private static final int PRINTUSASCII_HIGH = 126;
+
+    private static final byte[] UTF8_BOM = {(byte)0xEF, (byte)0xBB, (byte)0xBF};
 
     @SuppressWarnings("unused")
     public enum Facility {
@@ -160,6 +163,34 @@ public class SyslogMessage extends DefaultByteBufHolder {
             return this;
         }
 
+        /**
+         * Sets the message content as a raw UTF-8 encoded string.
+         *
+         * @param content the string to use as the message's content
+         * @return {@code this} for method chaining
+         */
+        public MessageBuilder content(CharSequence content) {
+            final ByteBuf buf = Unpooled.buffer(content.length());
+            ByteBufUtil.writeUtf8(buf, content);
+            this.content = buf;
+            return this;
+        }
+
+        /**
+         * Sets the message content as a BOM prefixed UTF-8 encoded string, per
+         * <a href="http://tools.ietf.org/html/rfc5424#section-6.4">RFC-5424 Section 6.4</a>.
+         *
+         * @param content the string to use as the message's content
+         * @return {@code this} for method chaining
+         */
+        public MessageBuilder utf8Content(CharSequence content) {
+            final ByteBuf buf = Unpooled.buffer(content.length() + 3);
+            buf.writeBytes(UTF8_BOM);
+            ByteBufUtil.writeUtf8(buf, content);
+            this.content = buf;
+            return this;
+        }
+
         public SyslogMessage build(boolean validate) {
             if (validate) {
                 validatePrintUsAscii(MAX_HOSTNAME_LENGTH, hostname);
@@ -224,6 +255,10 @@ public class SyslogMessage extends DefaultByteBufHolder {
         return c >= PRINTUSASCII_LOW && c <= PRINTUSASCII_HIGH;
     }
 
+    public static MessageBuilder builder() {
+        return new MessageBuilder();
+    }
+
     private final Facility facility;
     private final Severity severity;
     private final ZonedDateTime timestamp;
@@ -275,6 +310,17 @@ public class SyslogMessage extends DefaultByteBufHolder {
 
     public AsciiString getMessageId() {
         return messageId;
+    }
+
+    public String contentAsUtf8() {
+        final ByteBuf buf = content();
+        final int idx = buf.readerIndex();
+        if (buf.getByte(idx) == UTF8_BOM[0]
+                && buf.getByte(idx + 1) == UTF8_BOM[1]
+                && buf.getByte(idx + 2) == UTF8_BOM[2]) {
+            buf.readerIndex(idx + 3);
+        }
+        return buf.toString(StandardCharsets.UTF_8);
     }
 
     public Map<AsciiString, Map<AsciiString, String>> getStructuredData() {
