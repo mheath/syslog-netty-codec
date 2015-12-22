@@ -26,8 +26,6 @@ import java.util.List;
 
 /**
  * Frames outbound {@link ByteBuf} objects using the Syslog message framing described in RFC-6587.
- *
- * @author Mike Heath
  */
 public class SyslogFrameEncoder extends MessageToMessageEncoder<ByteBuf> {
     @Override

@@ -23,9 +23,6 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.string.StringDecoder;
 import org.junit.Test;
 
-/**
- * @author Mike Heath
- */
 public class SyslogFrameDecoderTest {
 
     @Test

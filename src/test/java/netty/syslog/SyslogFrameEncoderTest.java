@@ -25,9 +25,6 @@ import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 
-/**
- * @author Mike Heath
- */
 public class SyslogFrameEncoderTest {
 
     @Test

@@ -30,9 +30,6 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-/**
- * @author Mike Heath
- */
 public class CodecTester {
 
     private boolean fragmentBuffer = false;

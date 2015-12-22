@@ -23,9 +23,6 @@ import org.junit.Test;
 
 import java.time.ZonedDateTime;
 
-/**
- * @author Mike Heath
- */
 public class SyslogMessageEncoderTest {
 
     @Test

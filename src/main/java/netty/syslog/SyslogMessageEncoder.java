@@ -28,9 +28,6 @@ import java.util.Map;
 
 import static netty.syslog.CodecUtil.*;
 
-/**
- * @author Mike Heath
- */
 public class SyslogMessageEncoder extends MessageToByteEncoder<SyslogMessage> {
 
     public static final DateTimeFormatter SYSLOG_DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'kk:mm:ss.SSSSSSX");

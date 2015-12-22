@@ -27,9 +27,6 @@ import java.util.Map;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
-/**
- * @author Mike Heath
- */
 public class SyslogMessageDecoderTest {
 
     @Test
