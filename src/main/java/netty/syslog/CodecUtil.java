@@ -21,10 +21,10 @@ import io.netty.handler.codec.DecoderException;
 import io.netty.util.AsciiString;
 
 class CodecUtil {
-    static int readDigit(ByteBuf buffer) {
+    static int readDigit(ByteBuf buf) {
         int digit = 0;
-        while (buffer.readableBytes() > 0 && Character.isDigit(peek(buffer))) {
-            digit = digit * 10 + buffer.readByte() - '0';
+        while (buf.readableBytes() > 0 && Character.isDigit(peek(buf))) {
+            digit = digit * 10 + buf.readByte() - '0';
         }
         return digit;
     }
@@ -34,13 +34,13 @@ class CodecUtil {
         return buf;
     }
 
-    static byte peek(ByteBuf buffer) {
-        return buffer.getByte(buffer.readerIndex());
+    static byte peek(ByteBuf buf) {
+        return buf.getByte(buf.readerIndex());
     }
 
-    static void expect(ByteBuf buffer, char c) {
-        if (buffer.readByte() != c) {
-            throw new DecoderException("Expected " + c + " at index " + buffer.readerIndex());
+    static void expect(ByteBuf buf, char c) {
+        if (buf.readByte() != c) {
+            throw new DecoderException("Expected " + c + " at index " + buf.readerIndex());
         }
     }
 
@@ -48,23 +48,23 @@ class CodecUtil {
         return readAsciiStringToChar(buf, ' ', checkNull);
     }
 
-    static AsciiString readAsciiStringToChar(ByteBuf buffer, char c, boolean checkNull) {
-        if (checkNull && peek(buffer) == '-') {
-            buffer.readerIndex(buffer.readerIndex() + 2);
+    static AsciiString readAsciiStringToChar(ByteBuf buf, char c, boolean checkNull) {
+        if (checkNull && peek(buf) == '-') {
+            buf.readerIndex(buf.readerIndex() + 2);
             return null;
         }
         int length = -1;
-        for (int i = buffer.readerIndex(); i < buffer.capacity(); i++) {
-            if (buffer.getByte(i) == c) {
-                length = i - buffer.readerIndex();
+        for (int i = buf.readerIndex(); i < buf.capacity(); i++) {
+            if (buf.getByte(i) == c) {
+                length = i - buf.readerIndex();
                 break;
             }
         }
         if (length < 0) {
-            length = buffer.readableBytes();
+            length = buf.readableBytes();
         }
-        final AsciiString string = new AsciiString(buffer.readBytes(length).array(), false);
-        buffer.readByte();
+        final AsciiString string = new AsciiString(buf.readBytes(length).array(), false);
+        buf.readByte();
         return string;
     }
 }

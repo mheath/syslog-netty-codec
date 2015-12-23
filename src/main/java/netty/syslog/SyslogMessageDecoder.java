@@ -51,15 +51,15 @@ public class SyslogMessageDecoder extends ByteToMessageDecoder {
     }
 
     @Override
-    protected void decode(ChannelHandlerContext context, ByteBuf buffer, List<Object> objects) throws Exception {
-        if (buffer.readableBytes() < 1) {
+    protected void decode(ChannelHandlerContext context, ByteBuf buf, List<Object> objects) throws Exception {
+        if (buf.readableBytes() < 1) {
             return;
         }
         final SyslogMessage.MessageBuilder messageBuilder = SyslogMessage.MessageBuilder.create();
 
         // Decode PRI
-        expect(buffer, '<');
-        final int pri = readDigit(buffer);
+        expect(buf, '<');
+        final int pri = readDigit(buf);
         if (pri < 0 || pri > 191) {
             throw new DecoderException("Invalid PRIVAL " + pri);
         }
@@ -69,17 +69,17 @@ public class SyslogMessageDecoder extends ByteToMessageDecoder {
         messageBuilder.facility(SyslogMessage.Facility.values()[facility]);
         messageBuilder.severity(SyslogMessage.Severity.values()[severity]);
 
-        expect(buffer, '>');
+        expect(buf, '>');
 
         // Decode VERSION
-        if (buffer.readByte() != '1') {
+        if (buf.readByte() != '1') {
             throw new DecoderException("Expected a version 1 syslog message");
         }
-        expect(buffer, ' ');
+        expect(buf, ' ');
 
         // Decode TIMESTAMP
         final ZonedDateTime timestamp;
-        final AsciiString timeStampString = readAsciiStringToSpace(buffer, true);
+        final AsciiString timeStampString = readAsciiStringToSpace(buf, true);
         if (timeStampString == null) {
             timestamp = null;
         } else {
@@ -88,27 +88,27 @@ public class SyslogMessageDecoder extends ByteToMessageDecoder {
         messageBuilder.timestamp(timestamp);
 
         // Decode HOSTNAME
-        messageBuilder.hostname(readAsciiStringToSpace(buffer, true));
+        messageBuilder.hostname(readAsciiStringToSpace(buf, true));
 
         // Decode APP-NAME
-        messageBuilder.applicationName(readAsciiStringToSpace(buffer, true));
+        messageBuilder.applicationName(readAsciiStringToSpace(buf, true));
 
         // Decode PROC-ID
-        messageBuilder.processId(readAsciiStringToSpace(buffer, true));
+        messageBuilder.processId(readAsciiStringToSpace(buf, true));
 
         // Decode MSGID
-        messageBuilder.messageId(readAsciiStringToSpace(buffer, true));
+        messageBuilder.messageId(readAsciiStringToSpace(buf, true));
 
-        final byte structuredData = buffer.readByte();
+        final byte structuredData = buf.readByte();
         if (structuredData == '[') {
             // Decode STRUCTURED-DATA
-            decodeStructuredData(messageBuilder, buffer);
+            decodeStructuredData(messageBuilder, buf);
         } else if (structuredData != '-') {
             throw new DecoderException("Invalid structured data field. Expected '[' or '-', got " + (char)structuredData);
         }
 
-        final int length = buffer.readableBytes();
-        messageBuilder.content(buffer.readSlice(length).retain());
+        final int length = buf.readableBytes();
+        messageBuilder.content(buf.readSlice(length).retain());
 
         objects.add(messageBuilder.build(validateMessages));
     }

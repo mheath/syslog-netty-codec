@@ -55,28 +55,28 @@ public class SyslogFrameDecoder extends DelimiterBasedFrameDecoder {
     }
 
     @Override
-    protected Object decode(ChannelHandlerContext ctx, ByteBuf buffer) throws Exception {
-        if (buffer.readableBytes() == 0) {
+    protected Object decode(ChannelHandlerContext ctx, ByteBuf buf) throws Exception {
+        if (buf.readableBytes() == 0) {
             return null;
         }
         final int length;
-        if (!readingLine && Character.isDigit(peek(buffer))) {
-            buffer.markReaderIndex();
+        if (!readingLine && Character.isDigit(peek(buf))) {
+            buf.markReaderIndex();
             // Decode the content length
-            length = readDigit(buffer);
-            if (buffer.readableBytes() == 0 || buffer.readableBytes() < length + 1) {
+            length = readDigit(buf);
+            if (buf.readableBytes() == 0 || buf.readableBytes() < length + 1) {
                 // Received a buffer with an incomplete frame
-                buffer.resetReaderIndex();
+                buf.resetReaderIndex();
                 return null;
             }
-            expect(buffer, ' ');
+            expect(buf, ' ');
             if (length > maxLength) {
                 throw new TooLongFrameException(
                         "Received a message of length " + length + ", maximum message length is " + maxLength);
             }
-            return buffer.readSlice(length).retain();
+            return buf.readSlice(length).retain();
         } else {
-            final Object lineFrame = super.decode(ctx, buffer);
+            final Object lineFrame = super.decode(ctx, buf);
             readingLine = lineFrame == null;
             return lineFrame;
         }

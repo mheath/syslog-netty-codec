@@ -33,36 +33,36 @@ public class SyslogFrameDecoderTest {
         final String crLfTerminated = "RFC 6587 3.5.1 CR LF terminated frame ";
         final String octetCount2 = "Another Octet counted frame";
 
-        final ByteBuf buffer = Unpooled.buffer(4096);
+        final ByteBuf buf = Unpooled.buffer(4096);
 
         // Encode octetCount frame
-        ByteBufUtil.writeUtf8(buffer, Integer.toString(octetCount.length()));
-        buffer.writeByte(' ');
-        ByteBufUtil.writeUtf8(buffer, octetCount);
+        ByteBufUtil.writeUtf8(buf, Integer.toString(octetCount.length()));
+        buf.writeByte(' ');
+        ByteBufUtil.writeUtf8(buf, octetCount);
 
         // Encode lfTerminated frame
-        ByteBufUtil.writeUtf8(buffer, lfTerminated);
-        buffer.writeByte('\n');
+        ByteBufUtil.writeUtf8(buf, lfTerminated);
+        buf.writeByte('\n');
 
         // Encode nulTerminated frame
-        ByteBufUtil.writeUtf8(buffer, nulTerminated);
-        buffer.writeByte(0);
+        ByteBufUtil.writeUtf8(buf, nulTerminated);
+        buf.writeByte(0);
 
         // Encode crLfTerminated frame
-        ByteBufUtil.writeUtf8(buffer, crLfTerminated);
-        buffer.writeByte('\r');
-        buffer.writeByte('\n');
+        ByteBufUtil.writeUtf8(buf, crLfTerminated);
+        buf.writeByte('\r');
+        buf.writeByte('\n');
 
         // Encode second octetCount frame
-        ByteBufUtil.writeUtf8(buffer, Integer.toString(octetCount2.length()));
-        buffer.writeByte(' ');
-        ByteBufUtil.writeUtf8(buffer, octetCount2);
+        ByteBufUtil.writeUtf8(buf, Integer.toString(octetCount2.length()));
+        buf.writeByte(' ');
+        ByteBufUtil.writeUtf8(buf, octetCount2);
 
         // Run codec test
         new CodecTester()
                 .fragmentBuffer(true)
                 .decoderHandlers(new SyslogFrameDecoder(), new StringDecoder())
-                .expect(buffer, octetCount, lfTerminated, nulTerminated, crLfTerminated, octetCount2)
+                .expect(buf, octetCount, lfTerminated, nulTerminated, crLfTerminated, octetCount2)
                 .verify();
     }
 

@@ -47,8 +47,8 @@ public class CodecTester {
         return this;
     }
 
-    public CodecTester expect(ByteBuf buffer, Object... messages) {
-        expectations.add(new Expectation(buffer, messages));
+    public CodecTester expect(ByteBuf buf, Object... messages) {
+        expectations.add(new Expectation(buf, messages));
         return this;
     }
 
@@ -75,19 +75,19 @@ public class CodecTester {
     private void verifyDecoders() {
         final EmbeddedChannel channel = new EmbeddedChannel(decoderHandlers);
         expectations.forEach(expectation -> {
-            expectation.buffer.markReaderIndex();
+            expectation.buf.markReaderIndex();
             try {
                 if (fragmentBuffer) {
                     // Write 1 byte at a time to ensure the decoder handles pagment fragmentation
-                    while (expectation.buffer.readableBytes() > 0) {
-                        channel.writeInbound(expectation.buffer.readBytes(1));
+                    while (expectation.buf.readableBytes() > 0) {
+                        channel.writeInbound(expectation.buf.readBytes(1));
                     }
                 } else {
-                    channel.writeInbound(expectation.buffer);
+                    channel.writeInbound(expectation.buf);
                 }
                 expectation.messages.forEach(m -> assertEquals(m, channel.readInbound()));
             } finally {
-                expectation.buffer.resetReaderIndex();
+                expectation.buf.resetReaderIndex();
             }
         });
     }
@@ -96,20 +96,20 @@ public class CodecTester {
         final EmbeddedChannel channel = new EmbeddedChannel(encoderHandlers);
         expectations.forEach(expectation -> {
             expectation.messages.forEach(channel::writeOutbound);
-            final ByteBuf outboundBuffer = Unpooled.buffer(expectation.buffer.readableBytes());
+            final ByteBuf outboundBuffer = Unpooled.buffer(expectation.buf.readableBytes());
             channel.outboundMessages().forEach(buffer -> outboundBuffer.writeBytes((ByteBuf) buffer));
-            System.out.println("Expected: " + expectation.buffer.readerIndex(0).toString(StandardCharsets.UTF_8));
+            System.out.println("Expected: " + expectation.buf.readerIndex(0).toString(StandardCharsets.UTF_8));
             System.out.println("Actual  : " + outboundBuffer.readerIndex(0).toString(StandardCharsets.UTF_8));
-            assertEquals(expectation.buffer, outboundBuffer);
+            assertEquals(expectation.buf, outboundBuffer);
         });
     }
 
     private static class Expectation {
-        private final ByteBuf buffer;
+        private final ByteBuf buf;
         private final List<Object> messages;
 
-        public Expectation(ByteBuf buffer, Object[] message) {
-            this.buffer = buffer;
+        public Expectation(ByteBuf buf, Object[] message) {
+            this.buf = buf;
             this.messages = Arrays.asList(message);
         }
     }

@@ -44,7 +44,7 @@ public class SyslogFrameEncoderTest {
                 .verify();
     }
 
-    private void writeFrame(ByteBuf buffer, String frame) {
-        ByteBufUtil.writeUtf8(buffer, Integer.toString(frame.length()) + " " + frame);
+    private void writeFrame(ByteBuf buf, String frame) {
+        ByteBufUtil.writeUtf8(buf, Integer.toString(frame.length()) + " " + frame);
     }
 }
