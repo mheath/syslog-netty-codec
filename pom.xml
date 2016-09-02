@@ -20,8 +20,8 @@
 	<properties>
 		<java.version>1.8</java.version>
 
-		<netty.version>4.0.18.Final</netty.version>
-		<testng.version>6.3.1</testng.version>
+		<netty.version>4.1.4.Final</netty.version>
+		<testng.version>6.8.21</testng.version>
 	</properties>
 
 	<build>
