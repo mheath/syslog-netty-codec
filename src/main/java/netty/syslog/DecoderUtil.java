@@ -18,6 +18,7 @@ package netty.syslog;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DecoderException;
+import io.netty.util.CharsetUtil;
 
 class DecoderUtil {
 	static int readDigit(ByteBuf buffer) {
@@ -53,6 +54,8 @@ class DecoderUtil {
 		if (length < 0) {
 			length = buffer.readableBytes();
 		}
-		return new String(buffer.readBytes(length).array());
+		final String s = buffer.toString(buffer.readerIndex(), length, CharsetUtil.UTF_8);
+		buffer.skipBytes(length);
+		return s;
 	}
 }
