@@ -63,7 +63,7 @@
 	<scm>
 		<url>scm:git:https://github.com/mheath/syslog-netty-codec</url>
 		<connection>scm:git:https://github.com/mheath/syslog-netty-codec</connection>
-		<developerConnection>scm:git:https://github.com/mheath/syslog-netty-codec</developerConnection>
+		<developerConnection>scm:git:git@github.com:mheath/syslog-netty-codec.git</developerConnection>
 	</scm>
 
 	<developers>
