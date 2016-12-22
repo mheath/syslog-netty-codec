@@ -34,9 +34,30 @@ class DecoderUtil {
 	}
 
 	static void expect(ByteBuf buffer, char c) {
-		if (buffer.readByte() != c) {
-			throw new DecoderException("Expected " + c + " at index " + buffer.readerIndex());
+		byte readByte = buffer.readByte();
+		if (readByte != c) {
+			throw new DecoderException("Expected " + c + " at index " + buffer.readerIndex() + " got "+ (char)readByte);
 		}
+	}
+
+	static void skipStructuredData(ByteBuf buffer, boolean checkNull) {
+		if (checkNull && peek(buffer) == '-') {
+			buffer.readByte();
+			return;
+		}
+		expect(buffer, '[');
+		int length = -1;
+		for (int i = buffer.readerIndex(); i < buffer.capacity(); i++) {
+			if (buffer.getByte(i) == ' ' && buffer.getByte(i-1) == ']') {
+				length = i - buffer.readerIndex();
+				break;
+			}
+		}
+		if (length < 0) {
+			length = buffer.readableBytes();
+		}
+		buffer.skipBytes(length);
+		return;
 	}
 
 	static String readStringToSpace(ByteBuf buffer, boolean checkNull) {

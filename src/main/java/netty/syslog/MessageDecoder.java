@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DecoderException;
+import io.netty.util.CharsetUtil;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -28,6 +29,7 @@ import static netty.syslog.DecoderUtil.expect;
 import static netty.syslog.DecoderUtil.peek;
 import static netty.syslog.DecoderUtil.readDigit;
 import static netty.syslog.DecoderUtil.readStringToSpace;
+import static netty.syslog.DecoderUtil.skipStructuredData;
 
 public class MessageDecoder extends ByteToMessageDecoder {
 
@@ -85,8 +87,8 @@ public class MessageDecoder extends ByteToMessageDecoder {
 		messageBuilder.messageId(readStringToSpace(buffer, true));
 		expect(buffer, ' ');
 
-		// TODO Decode structured data
-		expect(buffer, '-');
+		// TODO Decode structured data discard for now
+		skipStructuredData(buffer, true);
 		expect(buffer, ' ');
 
 		final int length = buffer.readableBytes();
