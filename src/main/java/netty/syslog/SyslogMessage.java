@@ -24,10 +24,13 @@ import io.netty.util.AsciiString;
 
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Represents a Syslog content as defined by RFC 5424. See http://tools.ietf.org/html/rfc5424#section-6.
@@ -93,7 +96,7 @@ public class SyslogMessage extends DefaultByteBufHolder {
         private AsciiString applicationName;
         private AsciiString processId;
         private AsciiString messageId;
-        private Map<AsciiString, Map<AsciiString, String>> structuredData;
+        private Map<AsciiString, Map<AsciiString, List<String>>> structuredData;
         private ByteBuf content = Unpooled.EMPTY_BUFFER;
 
         public static MessageBuilder create() {
@@ -141,21 +144,18 @@ public class SyslogMessage extends DefaultByteBufHolder {
         }
 
         public MessageBuilder addStructuredDataElement(CharSequence id, CharSequence name, String value) {
-            setStructuredDataElement(id).put(toAsciiString(name), value);
+            final Map<AsciiString, List<String>> values = setStructuredDataElement(id);
+            final AsciiString asciiName = AsciiString.of(name);
+            List<String> valueList = values.computeIfAbsent(asciiName, key -> new ArrayList<>());
+            valueList.add(value);
             return this;
         }
 
-        private Map<AsciiString, String> setStructuredDataElement(CharSequence id) {
-            final AsciiString asciiName = toAsciiString(id);
+        private Map<AsciiString, List<String>> setStructuredDataElement(CharSequence id) {
             if (structuredData == null) {
-                structuredData = new HashMap<>();
+                structuredData = new LinkedHashMap<>();
             }
-            Map<AsciiString, String> params = structuredData.get(asciiName);
-            if (params == null) {
-                params = new HashMap<>();
-                structuredData.put(asciiName, params);
-            }
-            return params;
+            return structuredData.computeIfAbsent(toAsciiString(id), key -> new LinkedHashMap<>());
         }
 
         public MessageBuilder content(ByteBuf message) {
@@ -242,17 +242,17 @@ public class SyslogMessage extends DefaultByteBufHolder {
             }
         }
 
-        private AsciiString toAsciiString(CharSequence string) {
-            if (string == null) {
-                return null;
-            }
-            return (string instanceof AsciiString)? (AsciiString) string : new AsciiString(string);
-        }
-
     }
 
     static boolean isPrintableUsAscii(char c) {
         return c >= PRINTUSASCII_LOW && c <= PRINTUSASCII_HIGH;
+    }
+
+    private static AsciiString toAsciiString(CharSequence string) {
+        if (string == null) {
+            return null;
+        }
+        return (string instanceof AsciiString)? (AsciiString) string : new AsciiString(string);
     }
 
     public static MessageBuilder builder() {
@@ -266,7 +266,7 @@ public class SyslogMessage extends DefaultByteBufHolder {
     private final AsciiString applicationName;
     private final AsciiString processId;
     private final AsciiString messageId;
-    private final Map<AsciiString, Map<AsciiString, String>> structuredData;
+    private final Map<AsciiString, Map<AsciiString, List<String>>> structuredData;
 
     private SyslogMessage(MessageBuilder builder) {
         super(builder.content);
@@ -280,7 +280,7 @@ public class SyslogMessage extends DefaultByteBufHolder {
         if (builder.structuredData == null) {
             this.structuredData = Collections.emptyMap();
         } else {
-            this.structuredData = new HashMap<>(builder.structuredData);
+            this.structuredData = new LinkedHashMap<>(builder.structuredData);
         }
     }
 
@@ -323,8 +323,33 @@ public class SyslogMessage extends DefaultByteBufHolder {
         return buf.toString(StandardCharsets.UTF_8);
     }
 
-    public Map<AsciiString, Map<AsciiString, String>> getStructuredData() {
+    public Map<AsciiString, Map<AsciiString, List<String>>> getStructuredData() {
         return structuredData;
+    }
+
+    public boolean hasStructuredId(CharSequence id) {
+        return structuredData.get(toAsciiString(id)) != null;
+    }
+
+    public Map<AsciiString, List<String>> getStructuredDataElement(CharSequence id) {
+        final Map<AsciiString, List<String>> values = structuredData.get(toAsciiString(id));
+        return values == null ? Collections.emptyMap() : values;
+    }
+
+    public Optional<String> getFirstStructuredValue(CharSequence id, CharSequence name) {
+        return getStructuredValues(id, name).stream().findFirst();
+    }
+
+    public List<String> getStructuredValues(CharSequence id, CharSequence name) {
+        final Map<AsciiString, List<String>> values = structuredData.get(toAsciiString(id));
+        if (values == null) {
+            return Collections.emptyList();
+        }
+        final List<String> valueList = values.get(toAsciiString(name));
+        if (valueList == null) {
+            return Collections.emptyList();
+        }
+        return valueList;
     }
 
     @Override

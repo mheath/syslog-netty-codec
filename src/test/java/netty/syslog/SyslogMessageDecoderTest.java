@@ -22,6 +22,9 @@ import io.netty.util.AsciiString;
 import org.junit.Test;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.Matchers.*;
@@ -58,27 +61,29 @@ public class SyslogMessageDecoderTest {
         SyslogMessageDecoder.decodeStructuredData(builder, Unpooled.wrappedBuffer(rawStructuredData.getBytes()));
         final SyslogMessage message = builder.build(false);
 
-        final Map<AsciiString, Map<AsciiString, String>> structuredData = message.getStructuredData();
+        final Map<AsciiString, Map<AsciiString, List<String>>> structuredData = message.getStructuredData();
         assertThat(structuredData.entrySet(), iterableWithSize(3));
 
         // Assert foo element
         final AsciiString fooElement = AsciiString.of("foo");
+        assertTrue(message.hasStructuredId("foo"));
         assertThat(structuredData, hasKey(fooElement));
         assertThat(structuredData.get(fooElement).entrySet(), emptyIterable());
 
         // Assert exampleSDID@32473 element
-        final AsciiString exampleSdidElement = AsciiString.of("exampleSDID@32473");
-        assertThat(structuredData, hasKey(exampleSdidElement));
-        final Map<AsciiString, String> sdidData = structuredData.get(exampleSdidElement);
+        final String exampledSdId = "exampleSDID@32473";
+        assertTrue(message.hasStructuredId(exampledSdId));
+        final Map<AsciiString, List<String>> sdidData = message.getStructuredDataElement(exampledSdId);
         assertThat(sdidData.entrySet(), iterableWithSize(3));
-        assertThat(sdidData, hasEntry(AsciiString.of("iut"), "3"));
-        assertThat(sdidData, hasEntry(AsciiString.of("eventSource"), "Application"));
-        assertThat(sdidData, hasEntry(AsciiString.of("eventID"), "1011"));
+        assertThat(message.getFirstStructuredValue(exampledSdId, "iut").get(), equalTo("3"));
+        assertThat(sdidData, hasEntry(AsciiString.of("iut"), Collections.singletonList("3")));
+        assertThat(sdidData, hasEntry(AsciiString.of("eventSource"), Collections.singletonList("Application")));
+        assertThat(sdidData, hasEntry(AsciiString.of("eventID"), Collections.singletonList("1011")));
 
         final AsciiString examplePriorityElement = AsciiString.of("examplePriority@32473");
-        assertThat(structuredData, hasKey(exampleSdidElement));
-        final Map<AsciiString, String> priorityData = structuredData.get(examplePriorityElement);
-        assertThat(priorityData, hasEntry(AsciiString.of("class"), "\"high\""));
+        assertThat(structuredData, hasKey(examplePriorityElement));
+        final Map<AsciiString, List<String>> priorityData = structuredData.get(examplePriorityElement);
+        assertThat(priorityData, hasEntry(AsciiString.of("class"), Collections.singletonList("\"high\"")));
     }
 
 }

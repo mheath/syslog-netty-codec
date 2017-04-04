@@ -24,13 +24,15 @@ import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.util.AsciiString;
 
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 
 import static netty.syslog.CodecUtil.*;
 
 public class SyslogMessageEncoder extends MessageToByteEncoder<SyslogMessage> {
 
-    public static final DateTimeFormatter SYSLOG_DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'kk:mm:ss.SSSSSSX");
+    public static final DateTimeFormatter SYSLOG_DATETIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'kk:mm:ss.SSSSSSX");
 
     @Override
     protected void encode(ChannelHandlerContext ctx, SyslogMessage msg, ByteBuf out) throws Exception {
@@ -68,20 +70,21 @@ public class SyslogMessageEncoder extends MessageToByteEncoder<SyslogMessage> {
         }
     }
 
-    private void encodeStructuredData(ByteBuf out, Map<AsciiString, Map<AsciiString, String>> structuredData) {
+    private void encodeStructuredData(ByteBuf out, Map<AsciiString, Map<AsciiString, List<String>>> structuredData) {
         structuredData.forEach((key, values) -> {
             out.writeByte('[');
             writeSdName(out, key);
             if (values.size() == 0) {
                 out.writeByte(' ').writeByte('-');
             } else {
-                values.forEach((name, value) -> {
-                    out.writeByte(' ');
-                    writeSdName(out, name);
-                    out.writeByte('=').writeByte('"');
-                    writeSdValue(out, value);
-                    out.writeByte('"');
-                });
+                values.forEach((name, valueList) -> valueList
+                        .forEach(value -> {
+                            out.writeByte(' ');
+                            writeSdName(out, name);
+                            out.writeByte('=').writeByte('"');
+                            writeSdValue(out, value);
+                            out.writeByte('"');
+                        }));
             }
             out.writeByte(']');
         });
