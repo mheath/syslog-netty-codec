@@ -17,8 +17,12 @@
 package netty.syslog;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.DecoderException;
 import io.netty.util.CharsetUtil;
+
+import java.util.Collections;
+import java.util.Map;
 
 class DecoderUtil {
 	static int readDigit(ByteBuf buffer) {
@@ -34,28 +38,52 @@ class DecoderUtil {
 	}
 
 	static void expect(ByteBuf buffer, char c) {
-		if (buffer.readByte() != c) {
-			throw new DecoderException("Expected " + c + " at index " + buffer.readerIndex());
+		byte b = buffer.readByte();
+		if (b != c) {
+			throw new DecoderException("Expected " + c + " at index " + buffer.readerIndex() + " but got " + (char)b);
 		}
 	}
 
 	static String readStringToSpace(ByteBuf buffer, boolean checkNull) {
+		return readStringToChar( buffer, ' ', checkNull );
+	}
+
+	static String readStringToChar(ByteBuf buffer, char c, boolean checkNull) {
 		if (checkNull && peek(buffer) == '-') {
 			buffer.readByte();
 			return null;
 		}
-		int length = -1;
+		int skipCount = -1;
+		boolean escaped = false;
+		ByteBuf newBuffer = Unpooled.buffer();
 		for (int i = buffer.readerIndex(); i < buffer.capacity(); i++) {
-			if (buffer.getByte(i) == ' ') {
-				length = i - buffer.readerIndex();
+			byte b = buffer.getByte(i);
+			if( b == '\\' && !escaped ) {
+				escaped = true;
+				continue;
+			} else if (b == c && !escaped) {
+				skipCount = i - buffer.readerIndex();
 				break;
 			}
+			newBuffer.writeByte( b );
+			escaped = false;
 		}
-		if (length < 0) {
-			length = buffer.readableBytes();
+		if ( skipCount < 0) {
+			skipCount = buffer.readableBytes();
 		}
-		final String s = buffer.toString(buffer.readerIndex(), length, CharsetUtil.UTF_8);
-		buffer.skipBytes(length);
+		final String s = newBuffer.toString( CharsetUtil.UTF_8);
+		buffer.skipBytes( skipCount );
 		return s;
+	}
+
+	static Map<String, Map<String,String>> readStructuredData( ByteBuf buffer, boolean checkNull ) {
+		if (checkNull && peek(buffer) == '-') {
+			buffer.readByte();
+      return Collections.emptyMap();
+		}
+
+		// TODO Parse the data
+
+		return Collections.emptyMap();
 	}
 }

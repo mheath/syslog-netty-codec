@@ -23,11 +23,9 @@ import io.netty.handler.codec.DecoderException;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
-import static netty.syslog.DecoderUtil.expect;
-import static netty.syslog.DecoderUtil.peek;
-import static netty.syslog.DecoderUtil.readDigit;
-import static netty.syslog.DecoderUtil.readStringToSpace;
+import static netty.syslog.DecoderUtil.*;
 
 public class MessageDecoder extends ByteToMessageDecoder {
 
@@ -86,7 +84,10 @@ public class MessageDecoder extends ByteToMessageDecoder {
 		expect(buffer, ' ');
 
 		// TODO Decode structured data
-		expect(buffer, '-');
+//		System.out.println( "MVS next is a " + (char)peek( buffer ) );
+//		expect(buffer, '-');
+		Map<String, Map<String, String>> data = readStructuredData( buffer, true );
+		//messageBuilder.addStructuredData(  );
 		expect(buffer, ' ');
 
 		final int length = buffer.readableBytes();
