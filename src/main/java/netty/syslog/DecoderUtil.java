@@ -21,9 +21,6 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.DecoderException;
 import io.netty.util.CharsetUtil;
 
-import java.util.Collections;
-import java.util.Map;
-
 class DecoderUtil {
 	static int readDigit(ByteBuf buffer) {
 		int digit = 0;
@@ -76,14 +73,24 @@ class DecoderUtil {
 		return s;
 	}
 
-	static Map<String, Map<String,String>> readStructuredData( ByteBuf buffer, boolean checkNull ) {
-		if (checkNull && peek(buffer) == '-') {
-			buffer.readByte();
-      return Collections.emptyMap();
-		}
+  static void readStructuredData(ByteBuf buffer, Message.MessageBuilder messageBuilder, boolean checkNull) {
+    if (checkNull && peek(buffer) == '-') {
+      buffer.readByte();
+      return;
+    }
 
-		// TODO Parse the data
+    expect(buffer, '[');
+    String sdid = readStringToSpace(buffer, false);
+    while (peek(buffer) != ']') {
+      expect(buffer, ' ');
+      String key = readStringToChar(buffer, '=', false);
+      expect(buffer, '=');
+      expect(buffer, '"');
+      String value = readStringToChar(buffer, '"', false);
+      expect(buffer, '"');
+      messageBuilder.addStructuredData(sdid, key, value);
+    }
+		expect(buffer, ']');
+  }
 
-		return Collections.emptyMap();
-	}
 }
