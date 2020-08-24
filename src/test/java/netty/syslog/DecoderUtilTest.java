@@ -16,4 +16,5 @@ public class DecoderUtilTest {
 			DecoderUtil.readStringToSpace(Unpooled.wrappedBuffer("This\\ is\\ a test".getBytes()), true),
 			"This is a");
   }
+
 }

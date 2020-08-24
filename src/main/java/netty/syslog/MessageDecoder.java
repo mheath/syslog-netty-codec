@@ -23,78 +23,74 @@ import io.netty.handler.codec.DecoderException;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 
 import static netty.syslog.DecoderUtil.*;
 
 public class MessageDecoder extends ByteToMessageDecoder {
 
-	@Override
-	protected void decode(ChannelHandlerContext context, ByteBuf buffer, List<Object> objects) throws Exception {
-		if (buffer.readableBytes() < 1) {
-			return;
-		}
-		final Message.MessageBuilder messageBuilder = Message.MessageBuilder.create();
+  @Override
+  protected void decode(ChannelHandlerContext context, ByteBuf buffer, List<Object> objects)
+      throws Exception {
+    if (buffer.readableBytes() < 1) {
+      return;
+    }
+    final Message.MessageBuilder messageBuilder = Message.MessageBuilder.create();
 
-		// Decode PRI
-		expect(buffer, '<');
-		final int pri = readDigit(buffer);
-		if (pri < 0 || pri > 191) {
-			throw new DecoderException("Invalid PRIVAL " + pri);
-		}
-		final int facility = pri / 8;
-		final int severity = pri % 8;
+    // Decode PRI
+    expect(buffer, '<');
+    final int pri = readDigit(buffer);
+    if (pri < 0 || pri > 191) {
+      throw new DecoderException("Invalid PRIVAL " + pri);
+    }
+    final int facility = pri / 8;
+    final int severity = pri % 8;
 
-		messageBuilder.facility(Message.Facility.values()[facility]);
-		messageBuilder.severity(Message.Severity.values()[severity]);
+    messageBuilder.facility(Message.Facility.values()[facility]);
+    messageBuilder.severity(Message.Severity.values()[severity]);
 
-		expect(buffer, '>');
+    expect(buffer, '>');
 
-		// Decode VERSION
-		if (buffer.readByte() != '1') {
-			throw new DecoderException("Expected a version 1 syslog message");
-		}
-		expect(buffer, ' ');
+    // Decode VERSION
+    if (buffer.readByte() != '1') {
+      throw new DecoderException("Expected a version 1 syslog message");
+    }
+    expect(buffer, ' ');
 
-		// Decode TIMESTAMP
-		final ZonedDateTime timestamp;
-		final String timeStampString = readStringToSpace(buffer, true);
-		if (timeStampString == null) {
-			timestamp = null;
-		} else {
-			timestamp = ZonedDateTime.parse(timeStampString);
-		}
-		messageBuilder.timestamp(timestamp);
-		expect(buffer, ' ');
+    // Decode TIMESTAMP
+    final ZonedDateTime timestamp;
+    final String timeStampString = readStringToSpace(buffer, true);
+    if (timeStampString == null) {
+      timestamp = null;
+    } else {
+      timestamp = ZonedDateTime.parse(timeStampString);
+    }
+    messageBuilder.timestamp(timestamp);
+    expect(buffer, ' ');
 
-		// Decode HOSTNAME
-		messageBuilder.hostname(readStringToSpace(buffer, true));
-		expect(buffer, ' ');
+    // Decode HOSTNAME
+    messageBuilder.hostname(readStringToSpace(buffer, true));
+    expect(buffer, ' ');
 
-		// Decode APP-NAME
-		messageBuilder.applicationName(readStringToSpace(buffer, true));
-		expect(buffer, ' ');
+    // Decode APP-NAME
+    messageBuilder.applicationName(readStringToSpace(buffer, true));
+    expect(buffer, ' ');
 
-		// Decode PROC-ID
-		messageBuilder.processId(readStringToSpace(buffer, true));
-		expect(buffer, ' ');
+    // Decode PROC-ID
+    messageBuilder.processId(readStringToSpace(buffer, true));
+    expect(buffer, ' ');
 
-		// Decode MSGID
-		messageBuilder.messageId(readStringToSpace(buffer, true));
-		expect(buffer, ' ');
+    // Decode MSGID
+    messageBuilder.messageId(readStringToSpace(buffer, true));
+    expect(buffer, ' ');
 
-		// TODO Decode structured data
-//		System.out.println( "MVS next is a " + (char)peek( buffer ) );
-//		expect(buffer, '-');
-		Map<String, Map<String, String>> data = readStructuredData( buffer, true );
-		//messageBuilder.addStructuredData(  );
-		expect(buffer, ' ');
+    // Decode structured data
+    readStructuredData(buffer, messageBuilder, true);
+    expect(buffer, ' ');
 
-		final int length = buffer.readableBytes();
-		messageBuilder.content(buffer.slice(buffer.readerIndex(), length).retain());
-		buffer.skipBytes(length);
+    final int length = buffer.readableBytes();
+    messageBuilder.content(buffer.slice(buffer.readerIndex(), length).retain());
+    buffer.skipBytes(length);
 
-		objects.add(messageBuilder.build());
-	}
-
+    objects.add(messageBuilder.build());
+  }
 }
